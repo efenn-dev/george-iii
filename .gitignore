@@ -1,0 +1,41 @@
+# Private / Personal
+MEMORY.md
+USER.md
+memory/
+ops-log.json
+
+# Credentials & Secrets
+.env
+*.env
+client_secret_*.json
+*.pem
+*.key
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Design Assets (large files, personal IP)
+etsy-shop/ready-to-upload/
+etsy-shop/packs/
+shorts-bot/clips/
+shorts-bot/output/
+
+# Node
+node_modules/
+package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+gateway-watchdog.log
+loop-breaker.log
+
+# OpenClaw internal
+.openclaw/
+workspace-state.json
