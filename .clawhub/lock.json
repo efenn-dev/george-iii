@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "skills": {
+    "etsy-seo-tag-optimizer": {
+      "version": "1.0.0",
+      "installedAt": 1774638246579
+    },
+    "trading": {
+      "version": "1.0.1",
+      "installedAt": 1774638249661
+    },
+    "etsy-seller-helper": {
+      "version": "1.0.0",
+      "installedAt": 1774638255733
+    },
+    "product-title-optimization": {
+      "version": "1.0.0",
+      "installedAt": 1774638257632
+    }
+  }
+}

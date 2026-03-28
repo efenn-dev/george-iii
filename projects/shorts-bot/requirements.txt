@@ -1,0 +1,11 @@
+# Core (required)
+ffmpeg-python>=0.2.0
+rich>=13.0.0
+
+# Optional — YouTube Shorts posting (--post --platforms youtube)
+# google-auth>=2.0.0
+# google-auth-oauthlib>=1.0.0
+# google-api-python-client>=2.0.0
+
+# Optional — TikTok posting (--post --platforms tiktok)
+# tiktok-uploader>=0.1.0

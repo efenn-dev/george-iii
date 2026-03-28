@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shorts Bot Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">🎬</span>
+                <span class="logo-text">Shorts Bot</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#status" class="nav-link active" data-section="status">
+                    <span class="nav-icon">📊</span>
+                    <span>System Status</span>
+                </a></li>
+                <li><a href="#jobs" class="nav-link" data-section="jobs">
+                    <span class="nav-icon">📝</span>
+                    <span>Jobs</span>
+                    <span id="jobs-badge" class="badge">0</span>
+                </a></li>
+                <li><a href="#submit" class="nav-link" data-section="submit">
+                    <span class="nav-icon">➕</span>
+                    <span>Submit Job</span>
+                </a></li>
+                <li><a href="#activity" class="nav-link" data-section="activity">
+                    <span class="nav-icon">📋</span>
+                    <span>Activity Log</span>
+                </a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="connection-status">
+                    <span id="connection-dot" class="status-dot offline"></span>
+                    <span id="connection-text">Connecting...</span>
+                </div>
+                <div class="last-update">
+                    Last update: <span id="last-update-time">--:--</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- System Status Section -->
+            <section id="status-section" class="section active">
+                <h1>System Status</h1>
+                <div class="status-grid">
+                    <!-- Bot Status Card -->
+                    <div class="status-card">
+                        <div class="card-header">
+                            <span class="card-icon">🤖</span>
+                            <h3>Discord Bot</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="bot-status" class="status-indicator">
+                                <span class="status-dot offline"></span>
+                                <span class="status-text">Checking...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FFmpeg Status Card -->
+                    <div class="status-card">
+                        <div class="card-header">
+                            <span class="card-icon">🎥</span>
+                            <h3>FFmpeg</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="ffmpeg-status" class="status-indicator">
+                                <span class="status-dot unknown"></span>
+                                <span class="status-text">Checking...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Config Status Card -->
+                    <div class="status-card">
+                        <div class="card-header">
+                            <span class="card-icon">⚙️</span>
+                            <h3>Configuration</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="config-status" class="status-indicator">
+                                <span class="status-dot unknown"></span>
+                                <span class="status-text">Checking...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Job Summary Card -->
+                    <div class="status-card wide">
+                        <div class="card-header">
+                            <span class="card-icon">📈</span>
+                            <h3>Job Summary</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="job-stats">
+                                <div class="stat-item">
+                                    <span id="stat-queued" class="stat-value">0</span>
+                                    <span class="stat-label">Queued</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span id="stat-processing" class="stat-value">0</span>
+                                    <span class="stat-label">Processing</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span id="stat-completed" class="stat-value">0</span>
+                                    <span class="stat-label">Completed</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span id="stat-failed" class="stat-value">0</span>
+                                    <span class="stat-label">Failed</span>
+                                </div>
+                                <div class="stat-item total">
+                                    <span id="stat-total" class="stat-value">0</span>
+                                    <span class="stat-label">Total</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cron Jobs Section -->
+                <div class="section-block">
+                    <h2>Scheduled Uploads</h2>
+                    <div id="cron-jobs-container" class="cron-jobs-list">
+                        <p class="empty-state">No scheduled uploads</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Jobs Section -->
+            <section id="jobs-section" class="section">
+                <div class="section-header">
+                    <h1>Job Queue</h1>
+                    <button id="clear-completed-btn" class="btn btn-secondary">
+                        Clear Completed
+                    </button>
+                </div>
+                <div id="jobs-container" class="jobs-table-container">
+                    <table class="jobs-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Platforms</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jobs-tbody">
+                            <!-- Jobs loaded dynamically -->
+                        </tbody>
+                    </table>
+                    <p id="jobs-empty" class="empty-state">No jobs yet</p>
+                </div>
+            </section>
+
+            <!-- Submit Section -->
+            <section id="submit-section" class="section">
+                <h1>Submit New Job</h1>
+                <form id="submit-form" class="submit-form">
+                    <div class="form-group">
+                        <label for="input-path">Video File Path</label>
+                        <input type="text" id="input-path" name="input_path" 
+                               placeholder="C:\Users\...\clips\video.mp4" required>
+                        <span class="form-hint">Full path to the video file to process</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" 
+                               placeholder="Epic Gaming Moment" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="3"
+                                  placeholder="Check this out! #gaming"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Platforms</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="platforms" value="youtube" checked>
+                                <span class="checkbox-custom"></span>
+                                YouTube
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="platforms" value="tiktok">
+                                <span class="checkbox-custom"></span>
+                                TikTok
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="platforms" value="instagram">
+                                <span class="checkbox-custom"></span>
+                                Instagram
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="max-duration">Max Duration (seconds)</label>
+                            <input type="number" id="max-duration" name="max_duration" 
+                                   value="60" min="1" max="300">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="blur-bg" name="blur_bg" checked>
+                                <span class="toggle-switch"></span>
+                                Blur Background
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="skip-approval" name="skip_approval">
+                                <span class="toggle-switch"></span>
+                                Skip Discord Approval
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="btn-icon">🚀</span>
+                            Submit Job
+                        </button>
+                        <button type="reset" class="btn btn-secondary">Reset</button>
+                    </div>
+                </form>
+
+                <div id="submit-result" class="result-message hidden"></div>
+            </section>
+
+            <!-- Activity Section -->
+            <section id="activity-section" class="section">
+                <h1>Recent Activity</h1>
+                <div id="activity-container" class="activity-list">
+                    <!-- Activity loaded dynamically -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
