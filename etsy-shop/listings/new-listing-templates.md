@@ -3,7 +3,7 @@
 
 ---
 
-## PACK 9 — Space Cat Designs (10-pack) — $6.99
+## `PACK 9 — Space Cat Designs (10-pack) — $6.99`
 
 **Title:**
 `Space Cat T-Shirt Design Bundle | 10 PNG Clipart | Astronaut Cat Nebula | Transparent Background | Commercial Use | Print on Demand`

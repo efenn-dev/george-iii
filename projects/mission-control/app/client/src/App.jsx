@@ -7,6 +7,7 @@ import Tasks from './pages/Tasks.jsx';
 import CronJobs from './pages/CronJobs.jsx';
 import ShortsBot from './pages/ShortsBot.jsx';
 import Runbook from './pages/Runbook.jsx';
+import SystemStatus from './pages/SystemStatus.jsx';
 
 const NAV = [
   { to: '/', label: '🎛️ Dashboard', end: true },
@@ -16,6 +17,7 @@ const NAV = [
   { to: '/cron', label: '⏱️ Cron Jobs' },
   { to: '/shorts', label: '🎬 Shorts Bot' },
   { to: '/runbook', label: '📖 Runbook' },
+  { to: '/system', label: '⚙️ System' },
 ];
 
 export default function App() {
@@ -46,6 +48,7 @@ export default function App() {
             <Route path="/cron" element={<CronJobs />} />
             <Route path="/shorts" element={<ShortsBot />} />
             <Route path="/runbook" element={<Runbook />} />
+            <Route path="/system" element={<SystemStatus />} />
           </Routes>
         </main>
       </div>

@@ -1,41 +1,45 @@
-# Private / Personal
-MEMORY.md
-USER.md
-memory/
-ops-log.json
+# Large video/audio files
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.wmv
+*.mp3
+*.wav
+*.m4a
+*.webm
 
-# Credentials & Secrets
-.env
-*.env
-client_secret_*.json
-*.pem
-*.key
-
-# Databases
+# Database files
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 
-# Design Assets (large files, personal IP)
-etsy-shop/ready-to-upload/
-etsy-shop/packs/
-shorts-bot/clips/
-shorts-bot/output/
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
 
 # Node
 node_modules/
-package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
-desktop.ini
-
-# Logs
-*.log
-gateway-watchdog.log
-loop-breaker.log
-
-# OpenClaw internal
-.openclaw/
-workspace-state.json

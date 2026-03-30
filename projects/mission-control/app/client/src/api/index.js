@@ -44,4 +44,12 @@ export const api = {
   // Costs
   getCostSummary: () => request('GET', '/costs/summary'),
   getCosts: (days = 7) => request('GET', `/costs?days=${days}`),
+
+  // System
+  getSystemStatus: () => request('GET', '/system/status'),
+  setWatchdog: (data) => request('POST', '/system/watchdog', data),
+  setLoopBreaker: (data) => request('POST', '/system/loop-breaker', data),
+  setWeeklyBackup: (data) => request('POST', '/system/weekly-backup', data),
+  setCircuitBreaker: (data) => request('POST', '/system/circuit-breaker', data),
+  triggerBackup: () => request('POST', '/system/backup-now'),
 };

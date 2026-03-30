@@ -176,6 +176,53 @@ function getSections() { return [
     ),
   },
   {
+    id: 'youtube',
+    emoji: '🎮',
+    title: 'YouTube Pipeline (Minecraft)',
+    intro: 'Automated Minecraft recording → highlight detection → YouTube upload pipeline.',
+    content: (
+      <div style={styles.stack}>
+        <CodeBlock path="Project: projects/minecraft-pipeline/" />
+        <div style={styles.kvList}>
+          <RunbookItem label="Dry Run Test" description="python scripts/run_pipeline.py --dry-run" />
+          <RunbookItem label="Full Pipeline" description="python scripts/run_pipeline.py --full" />
+          <RunbookItem label="Stages 3-8 Only" description="Drop video in raw/pc/, run: python scripts/run_pipeline.py --stage 3-8" />
+          <RunbookItem label="Single Stage" description="python scripts/run_pipeline.py --stage N (1-8)" />
+        </div>
+        <ProcessCard
+          title="PIPELINE STAGES"
+          steps={[
+            'Stage 1: Auto-Record (OBS dual-device, starts when Minecraft launches)',
+            'Stage 2: File Collection & Audio Sync (cross-device alignment)',
+            'Stage 3: Highlight Detection (PySceneDetect + Whisper excitement keywords)',
+            'Stage 4: Video Assembly & Branding (intro/outro, logo, PiP)',
+            'Stage 5: Captioning (Whisper transcription + subtitle burn-in)',
+            'Stage 6: Thumbnail Generation (auto frame + text overlay)',
+            'Stage 7: AI Metadata (title, description, tags via LLM)',
+            'Stage 8: YouTube Upload (unlisted by default for review)',
+          ]}
+        />
+        <ProcessCard
+          title="SETUP CHECKLIST"
+          steps={[
+            'OBS Studio: Enable WebSocket (Tools → WebSocket Server Settings → port 4455)',
+            'Edit config/pipeline_config.yaml with OBS password',
+            'pip install -r requirements.txt',
+            'Place branding assets in assets/ (intro.mp4, outro.mp4, logo.png)',
+            'For YouTube upload: configure Google OAuth client_secrets.json',
+          ]}
+        />
+        <div style={styles.kvList}>
+          <RunbookItem label="Config" description="projects/minecraft-pipeline/config/pipeline_config.yaml" />
+          <RunbookItem label="Logs" description="projects/minecraft-pipeline/logs/" />
+          <RunbookItem label="Output" description="projects/minecraft-pipeline/processed/final/" />
+          <RunbookItem label="Thumbnails" description="projects/minecraft-pipeline/thumbnails/" />
+          <RunbookItem label="Child Safety" description="All uploads default to unlisted. Webcam/voice disabled. COPPA flags auto-set." />
+        </div>
+      </div>
+    ),
+  },
+  {
     id: 'costs',
     emoji: '💵',
     title: 'Cost Reference',

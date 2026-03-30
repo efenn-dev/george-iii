@@ -1,0 +1,2543 @@
+﻿Minecraft Recording & YouTube-Editing Pipeline
+Full Automation Playbook
+From Dual-Device Capture to YouTube-Ready Upload in Zero Clicks
+Prepared for: Emmitt  |  Version 1.0  |  March 28, 2026
+Melissa, TX  |  Platform: Windows 10
+Executive Summary
+This playbook describes a fully automated pipeline that captures Minecraft gameplay from two devices simultaneously (a primary Windows PC and a child's Bedrock Edition device), detects the most exciting highlights using AI-powered visual and audio analysis, assembles them into a branded and captioned video, generates a click-worthy thumbnail and SEO-optimized metadata, and stages everything for YouTube upload ΓÇö all orchestrated by eight Python scripts and open-source tools.
+The pipeline eliminates the repetitive manual work of content creation: no more hand-editing hours of footage, no more writing titles and descriptions from scratch, and no more forgetting to add captions or watermarks. Once configured, the system runs end-to-end with a single command (python run_pipeline.py --full) or on an automated schedule via Windows Task Scheduler.
+Child safety is treated as a first-class concern throughout: all recording on the child's device is parent-controlled, webcam and voice capture are disabled by default, every upload defaults to ΓÇ£unlistedΓÇ¥ for parental review, and COPPA ΓÇ£Made for KidsΓÇ¥ flags are handled automatically.
+Figure: OBS Studio configured for Minecraft capture ΓÇö the starting point of the pipeline.
+Table of Contents
+Pipeline Architecture Overview
+Prerequisites & Environment Setup
+Stage 1 ΓÇö Automated Recording (Dual-Device Capture)
+Stage 2 ΓÇö File Collection & Multi-Source Sync
+Stage 3 ΓÇö Intelligent Highlight Detection
+Stage 4 ΓÇö Video Assembly & Branding
+Stage 5 ΓÇö Automated Captioning
+Stage 6 ΓÇö Automated Thumbnail Generation
+Stage 7 ΓÇö AI Metadata Drafting
+Stage 8 ΓÇö YouTube Upload Preparation
+Pipeline Orchestrator
+Child Safety Considerations
+Scheduling & Automation
+Troubleshooting & FAQ
+Appendix: Quick Reference Card
+1. Pipeline Architecture Overview
+The pipeline comprises eight discrete stages, each implemented as a standalone Python script. Stages communicate through the file system ΓÇö each stage reads from a defined input directory and writes to a defined output directory, making it trivial to re-run any individual stage or inspect intermediate artifacts.
+End-to-End Flow Diagram
+ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ
+Γöé                    MINECRAFT RECORDING & YOUTUBE PIPELINE                          Γöé
+ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ
+
+  ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ    ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ    ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ    ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ
+  Γöé  STAGE 1     Γöé    Γöé  STAGE 2     Γöé    Γöé  STAGE 3     Γöé    Γöé  STAGE 4     Γöé
+  Γöé  Auto-Record ΓöéΓöÇΓöÇ> Γöé  Collect &   ΓöéΓöÇΓöÇ> Γöé  Highlight   ΓöéΓöÇΓöÇ> Γöé  Assembly &  Γöé
+  Γöé  (Dual-Dev.) Γöé    Γöé  Sync        Γöé    Γöé  Detection   Γöé    Γöé  Branding    Γöé
+  Γöé              Γöé    Γöé              Γöé    Γöé              Γöé    Γöé              Γöé
+  Γöé  OBS + WS    Γöé    Γöé  watchdog +  Γöé    Γöé  PyScene +   Γöé    Γöé  FFmpeg +    Γöé
+  Γöé  obsws_pythonΓöé    Γöé  FFmpeg +    Γöé    Γöé  Whisper     Γöé    Γöé  MoviePy     Γöé
+  Γöé              Γöé    Γöé  chromaprint Γöé    Γöé              Γöé    Γöé              Γöé
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ    ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ    ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ    ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ
+        Γöé                   Γöé                   Γöé                   Γöé
+        Γû╝                   Γû╝                   Γû╝                   Γû╝
+   raw/*.mkv          synced/*.mkv       highlights.json      branded.mp4
+                                                                    Γöé
+  ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ    ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ    ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ          Γöé
+  Γöé  STAGE 8     Γöé    Γöé  STAGE 7     Γöé    Γöé  STAGE 6     Γöé    ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓû╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ
+  Γöé  Upload to   Γöé<ΓöÇΓöÇ Γöé  Metadata    Γöé<ΓöÇΓöÇ Γöé  Thumbnail   Γöé<ΓöÇΓöÇ Γöé  STAGE 5     Γöé
+  Γöé  YouTube     Γöé    Γöé  Drafting    Γöé    Γöé  Generation  Γöé    Γöé  Captioning  Γöé
+  Γöé              Γöé    Γöé              Γöé    Γöé              Γöé    Γöé              Γöé
+  Γöé  YT Data API Γöé    Γöé  GPT / LLM  Γöé    Γöé  Pillow +    Γöé    Γöé  Whisper +   Γöé
+  Γöé  v3 + OAuth  Γöé    Γöé              Γöé    Γöé  FFmpeg      Γöé    Γöé  FFmpeg      Γöé
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ    ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ    ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ    ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ
+        Γöé                   Γöé                   Γöé                   Γöé
+        Γû╝                   Γû╝                   Γû╝                   Γû╝
+   video_id.txt       metadata.json       thumb_1280x720.jpg   captioned.mp4
+
+
+  ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+  ORCHESTRATOR:  run_pipeline.py --full | --stage N | --stage N-M | --dry-run
+  ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+Stage Summary Table
+2. Prerequisites & Environment Setup
+2.1 Prerequisites Checklist
+Install all Python dependencies in one command:
+pip install obsws-python psutil watchdog "scenedetect[opencv]" openai-whisper moviepy ^
+    Pillow google-api-python-client google-auth-oauthlib pyacoustid scipy pyyaml openai
+2.2 Project Folder Structure
+minecraft-pipeline/
+Γö£ΓöÇΓöÇ config/
+Γöé   Γö£ΓöÇΓöÇ pipeline_config.yaml        # Master configuration file
+Γöé   ΓööΓöÇΓöÇ client_secrets.json         # Google OAuth credentials (DO NOT commit)
+Γö£ΓöÇΓöÇ scripts/
+Γöé   Γö£ΓöÇΓöÇ 01_auto_record.py           # Stage 1: Dual-device OBS recording
+Γöé   Γö£ΓöÇΓöÇ 02_collect_sync.py          # Stage 2: File collection & audio sync
+Γöé   Γö£ΓöÇΓöÇ 03_highlight_detect.py      # Stage 3: AI highlight detection
+Γöé   Γö£ΓöÇΓöÇ 04_assemble_brand.py        # Stage 4: Video assembly & branding
+Γöé   Γö£ΓöÇΓöÇ 05_caption.py               # Stage 5: Whisper transcription & burn-in
+Γöé   Γö£ΓöÇΓöÇ 06_thumbnail.py             # Stage 6: Thumbnail generation
+Γöé   Γö£ΓöÇΓöÇ 07_metadata.py              # Stage 7: AI metadata drafting
+Γöé   Γö£ΓöÇΓöÇ 08_upload.py                # Stage 8: YouTube upload
+Γöé   ΓööΓöÇΓöÇ run_pipeline.py             # Orchestrator / CLI entry point
+Γö£ΓöÇΓöÇ assets/
+Γöé   Γö£ΓöÇΓöÇ intro.mp4                   # Branded intro sequence (3-5 sec)
+Γöé   Γö£ΓöÇΓöÇ outro.mp4                   # Subscribe CTA outro (5-10 sec)
+Γöé   Γö£ΓöÇΓöÇ logo.png                    # Channel logo (transparent PNG, 200x200)
+Γöé   Γö£ΓöÇΓöÇ overlay.png                 # Optional gameplay overlay
+Γöé   ΓööΓöÇΓöÇ fonts/
+Γöé       ΓööΓöÇΓöÇ Montserrat-Bold.ttf     # Thumbnail title font
+Γö£ΓöÇΓöÇ raw/
+Γöé   Γö£ΓöÇΓöÇ pc/                         # Raw recordings from primary PC
+Γöé   ΓööΓöÇΓöÇ device/                     # Raw recordings from child's device
+Γö£ΓöÇΓöÇ processed/
+Γöé   Γö£ΓöÇΓöÇ synced/                     # Temporally aligned multi-source clips
+Γöé   Γö£ΓöÇΓöÇ highlights/                 # Extracted highlight segments
+Γöé   Γö£ΓöÇΓöÇ branded/                    # Assembled video with branding
+Γöé   Γö£ΓöÇΓöÇ captioned/                  # Final captioned video
+Γöé   ΓööΓöÇΓöÇ final/                      # Upload-ready final output
+Γö£ΓöÇΓöÇ thumbnails/                     # Generated thumbnail images
+Γö£ΓöÇΓöÇ metadata/                       # JSON metadata files
+ΓööΓöÇΓöÇ logs/                           # Pipeline run logs
+2.3 Master Configuration File
+Create config/pipeline_config.yaml with the following template. All scripts read from this single configuration source.
+# ============================================================
+# pipeline_config.yaml ΓÇö Master Configuration
+# Minecraft Recording & YouTube Pipeline
+# ============================================================
+
+# --- OBS Connection (Primary PC) ---
+obs_primary:
+  host: "127.0.0.1"
+  port: 4455
+  password: "your_obs_password_here"
+
+# --- OBS Connection (Child's Device ΓÇö LAN) ---
+obs_child:
+  host: "192.168.1.105"          # Child's device LAN IP
+  port: 4455
+  password: "child_obs_password"
+  enabled: false                  # Set true when child device has OBS
+
+# --- Recording Paths ---
+paths:
+  raw_pc: "./raw/pc"
+  raw_device: "./raw/device"
+  synced: "./processed/synced"
+  highlights: "./processed/highlights"
+  branded: "./processed/branded"
+  captioned: "./processed/captioned"
+  final: "./processed/final"
+  thumbnails: "./thumbnails"
+  metadata: "./metadata"
+  logs: "./logs"
+
+# --- Branding Assets ---
+assets:
+  intro: "./assets/intro.mp4"
+  outro: "./assets/outro.mp4"
+  logo: "./assets/logo.png"
+  overlay: "./assets/overlay.png"
+  thumbnail_font: "./assets/fonts/Montserrat-Bold.ttf"
+
+# --- Process Detection ---
+game_detection:
+  process_names:
+    - "Minecraft.Windows.exe"     # Bedrock Edition (Windows 10/11)
+    - "javaw.exe"                 # Java Edition
+  poll_interval_sec: 5
+
+# --- Sync Settings ---
+sync:
+  method: "audio_fingerprint"     # Options: audio_fingerprint, ntp_timestamp
+  max_offset_sec: 10
+  sample_rate: 22050
+
+# --- Highlight Detection ---
+highlights:
+  scene_threshold: 27             # PySceneDetect adaptive threshold
+  min_scene_len_sec: 2
+  clip_padding_sec: 15            # Seconds before/after highlight
+  whisper_model: "base"           # Options: tiny, base, small, medium, large
+  excitement_keywords:
+    - "yes"
+    - "no"
+    - "oh my god"
+    - "wow"
+    - "died"
+    - "creeper"
+    - "diamond"
+    - "ender"
+    - "let's go"
+    - "clutch"
+    - "insane"
+    - "watch out"
+    - "run"
+    - "nether"
+    - "wither"
+  max_highlights: 12
+  target_duration_min: 12         # Target final video length in minutes
+
+# --- Assembly & Branding ---
+assembly:
+  output_resolution: "1920x1080"
+  fps: 60
+  codec: "libx264"
+  audio_codec: "aac"
+  crf: 18                        # Quality (lower = better, 18 is visually lossless)
+  logo_opacity: 0.5
+  logo_position: "bottom-right"
+  pip_enabled: true               # Picture-in-picture for dual feeds
+  pip_size: "320x180"
+  pip_position: "top-right"
+  crossfade_duration_sec: 0.5
+
+# --- Captioning ---
+captioning:
+  whisper_model: "medium"         # Use higher quality model for final captions
+  language: "en"
+  subtitle_style:
+    font: "Arial"
+    font_size: 22
+    primary_color: "&H00FFFFFF"   # White (ASS color format)
+    outline_color: "&H00000000"   # Black outline
+    outline_width: 2
+    margin_v: 40                  # Vertical margin from bottom
+
+# --- Thumbnail ---
+thumbnail:
+  width: 1280
+  height: 720
+  title_font_size: 72
+  title_color: "#FFFFFF"
+  title_shadow_color: "#000000"
+  gradient_opacity: 0.6
+  logo_size: 80
+  episode_badge: true
+
+# --- Metadata (AI) ---
+metadata_ai:
+  provider: "openai"              # Options: openai, local_llm, template
+  openai_model: "gpt-4o-mini"
+  max_title_length: 60
+  max_tags: 20
+  default_category_id: "20"      # 20 = Gaming
+  default_hashtags:
+    - "#Minecraft"
+    - "#MinecraftGameplay"
+    - "#Gaming"
+
+# --- YouTube Upload ---
+youtube:
+  client_secrets: "./config/client_secrets.json"
+  default_privacy: "unlisted"     # Always unlisted first for review
+  made_for_kids: false            # COPPA flag ΓÇö set per video
+  notify_subscribers: false       # Don't notify until reviewed
+  default_language: "en"
+
+# --- Child Safety ---
+child_safety:
+  webcam_capture: false           # NEVER enable without explicit consent
+  voice_recording: false          # Disabled by default on child's device
+  require_parent_review: true     # All uploads need manual publish
+  content_filter: true            # Scan transcripts for personal info
+  personal_info_patterns:
+    - "\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b"    # Phone numbers
+    - "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z]{2,}\\b"  # Emails
+    - "\\b\\d{5}(-\\d{4})?\\b"                # ZIP codes
+    - "(?i)\\b(school|address|teacher)\\b"     # Location references
+
+# --- Notifications ---
+notifications:
+  enabled: false
+  method: "toast"                 # Options: toast, email
+  email_to: ""
+3. Stage 1 ΓÇö Automated Recording (Dual-Device Capture)
+Stage 1 continuously monitors the local system for a running Minecraft process. When the game launches, it connects to OBS Studio via WebSocket and starts recording automatically. When the game closes, recording stops. Filenames include NTP-synchronized timestamps for cross-device temporal alignment in Stage 2.
+3.1 How OBS WebSocket Control Works
+OBS Studio 28+ ships with a built-in WebSocket server (previously a plugin). Enable it under Tools ΓåÆ WebSocket Server Settings. Set the port to 4455 and configure a password. The Python library obsws_python provides a clean API to send commands like StartRecord, StopRecord, SetCurrentProgramScene, and query recording status.
+3.2 Script: 01_auto_record.py
+"""
+01_auto_record.py ΓÇö Automated Dual-Device Recording Controller
+==============================================================
+Monitors for Minecraft process launch/exit and controls OBS
+recording via WebSocket. Supports primary PC and a child's
+device over LAN.
+
+Usage:
+    python 01_auto_record.py
+    python 01_auto_record.py --config ../config/pipeline_config.yaml
+"""
+
+import obsws_python as obs
+import psutil
+import time
+import yaml
+import logging
+import argparse
+import ntplib
+from datetime import datetime, timezone
+from pathlib import Path
+
+# ΓöÇΓöÇ Logging Setup ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("../logs/auto_record.log"),
+        logging.StreamHandler()
+    ]
+)
+log = logging.getLogger(__name__)
+
+# ΓöÇΓöÇ Configuration ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+def load_config(path: str = "../config/pipeline_config.yaml") -> dict:
+    """Load pipeline configuration from YAML file."""
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+# ΓöÇΓöÇ NTP Timestamp ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+def get_ntp_timestamp() -> str:
+    """
+    Fetch current time from NTP server for cross-device sync.
+    Falls back to local system time if NTP is unreachable.
+    """
+    try:
+        client = ntplib.NTPClient()
+        response = client.request("pool.ntp.org", version=3)
+        ntp_time = datetime.fromtimestamp(response.tx_time, tz=timezone.utc)
+        return ntp_time.strftime("%Y%m%d_%H%M%S_%f")
+    except Exception as e:
+        log.warning(f"NTP unavailable ({e}), using local time")
+        return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
+
+# ΓöÇΓöÇ Process Detection ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+def is_minecraft_running(process_names: list[str]) -> bool:
+    """Check if any Minecraft process is currently running."""
+    for proc in psutil.process_iter(["name"]):
+        try:
+            if proc.info["name"] in process_names:
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return False
+
+# ΓöÇΓöÇ OBS Connection Manager ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+class OBSRecorder:
+    """Manages OBS WebSocket connection and recording control."""
+
+    def __init__(self, host: str, port: int, password: str, name: str = "primary"):
+        self.host = host
+        self.port = port
+        self.password = password
+        self.name = name
+        self.client = None
+        self.is_recording = False
+
+    def connect(self) -> bool:
+        """Establish WebSocket connection to OBS."""
+        try:
+            self.client = obs.ReqClient(
+                host=self.host,
+                port=self.port,
+                password=self.password,
+                timeout=10
+            )
+            version = self.client.get_version()
+            log.info(
+                f"[{self.name}] Connected to OBS "
+                f"v{version.obs_version} "
+                f"(WebSocket v{version.obs_web_socket_version})"
+            )
+            return True
+        except Exception as e:
+            log.error(f"[{self.name}] OBS connection failed: {e}")
+            return False
+
+    def start_recording(self) -> bool:
+        """Start OBS recording with NTP-stamped filename."""
+        if not self.client or self.is_recording:
+            return False
+        try:
+            timestamp = get_ntp_timestamp()
+            # Set output filename via profile settings
+            self.client.set_profile_parameter(
+                "Output", "FilenameFormatting",
+                f"minecraft_{self.name}_{timestamp}"
+            )
+            self.client.start_record()
+            self.is_recording = True
+            log.info(f"[{self.name}] Recording STARTED ΓÇö {timestamp}")
+            return True
+        except Exception as e:
+            log.error(f"[{self.name}] Failed to start recording: {e}")
+            return False
+
+    def stop_recording(self) -> str:
+        """Stop OBS recording. Returns output file path."""
+        if not self.client or not self.is_recording:
+            return ""
+        try:
+            result = self.client.stop_record()
+            self.is_recording = False
+            output_path = result.output_path
+            log.info(f"[{self.name}] Recording STOPPED ΓÇö {output_path}")
+            return output_path
+        except Exception as e:
+            log.error(f"[{self.name}] Failed to stop recording: {e}")
+            self.is_recording = False
+            return ""
+
+    def disconnect(self):
+        """Clean up WebSocket connection."""
+        if self.client:
+            del self.client
+            self.client = None
+            log.info(f"[{self.name}] Disconnected from OBS")
+
+# ΓöÇΓöÇ Main Loop ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+def main():
+    parser = argparse.ArgumentParser(description="Auto-record Minecraft gameplay")
+    parser.add_argument("--config", default="../config/pipeline_config.yaml",
+                        help="Path to pipeline config YAML")
+    args = parser.parse_args()
+
+    config = load_config(args.config)
+    poll_interval = config["game_detection"]["poll_interval_sec"]
+    process_names = config["game_detection"]["process_names"]
+
+    # Initialize recorders
+    primary = OBSRecorder(
+        host=config["obs_primary"]["host"],
+        port=config["obs_primary"]["port"],
+        password=config["obs_primary"]["password"],
+        name="pc"
+    )
+
+    child = None
+    if config["obs_child"].get("enabled", False):
+        child = OBSRecorder(
+            host=config["obs_child"]["host"],
+            port=config["obs_child"]["port"],
+            password=config["obs_child"]["password"],
+            name="device"
+        )
+
+    # Connect to OBS instances
+    if not primary.connect():
+        log.critical("Cannot connect to primary OBS. Exiting.")
+        return
+
+    if child and not child.connect():
+        log.warning("Child OBS unavailable ΓÇö recording primary only.")
+        child = None
+
+    log.info("Monitoring for Minecraft process launch...")
+    game_was_running = False
+
+    try:
+        while True:
+            game_is_running = is_minecraft_running(process_names)
+
+            if game_is_running and not game_was_running:
+                # Game just launched ΓÇö start recording
+                log.info("Minecraft DETECTED ΓÇö initiating recording")
+                primary.start_recording()
+                if child:
+                    child.start_recording()
+
+            elif not game_is_running and game_was_running:
+                # Game just closed ΓÇö stop recording
+                log.info("Minecraft CLOSED ΓÇö stopping recording")
+                primary.stop_recording()
+                if child:
+                    child.stop_recording()
+
+            game_was_running = game_is_running
+            time.sleep(poll_interval)
+
+    except KeyboardInterrupt:
+        log.info("Interrupted by user ΓÇö cleaning up")
+        if primary.is_recording:
+            primary.stop_recording()
+        if child and child.is_recording:
+            child.stop_recording()
+    finally:
+        primary.disconnect()
+        if child:
+            child.disconnect()
+
+if __name__ == "__main__":
+    main()
+3.3 Child Device Setup Options
+4. Stage 2 ΓÇö File Collection & Multi-Source Sync
+When recording from two devices independently, the files will have slightly different start times and durations. Stage 2 solves the synchronization problem by aligning recordings temporally using audio cross-correlation (matching common game sounds across both feeds) or NTP-timestamp matching from filenames.
+4.1 Sync Methods Comparison
+4.2 Script: 02_collect_sync.py
+"""
+02_collect_sync.py ΓÇö File Collection & Multi-Source Synchronization
+===================================================================
+Watches raw recording folders for new files, performs temporal
+alignment using audio cross-correlation, and outputs synced
+clip pairs to the processed/synced/ directory.
+
+Usage:
+    python 02_collect_sync.py
+    python 02_collect_sync.py --method ntp_timestamp
+"""
+
+import subprocess
+import numpy as np
+import yaml
+import logging
+import argparse
+import shutil
+from pathlib import Path
+from scipy import signal
+from scipy.io import wavfile
+from datetime import datetime
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("../logs/collect_sync.log"),
+        logging.StreamHandler()
+    ]
+)
+log = logging.getLogger(__name__)
+
+def load_config(path: str = "../config/pipeline_config.yaml") -> dict:
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+def extract_audio_wav(video_path: str, output_wav: str,
+                      sample_rate: int = 22050) -> bool:
+    """Extract mono audio from video file as WAV using FFmpeg."""
+    cmd = [
+        "ffmpeg", "-y", "-i", video_path,
+        "-vn",                          # No video
+        "-ac", "1",                     # Mono
+        "-ar", str(sample_rate),        # Sample rate
+        "-f", "wav",
+        output_wav
+    ]
+    try:
+        subprocess.run(cmd, capture_output=True, check=True)
+        log.info(f"Extracted audio: {output_wav}")
+        return True
+    except subprocess.CalledProcessError as e:
+        log.error(f"Audio extraction failed: {e.stderr.decode()}")
+        return False
+
+def compute_audio_offset(wav_a: str, wav_b: str) -> float:
+    """
+    Compute temporal offset between two audio files using
+    cross-correlation. Returns offset in seconds (positive
+    means B starts after A).
+    """
+    rate_a, data_a = wavfile.read(wav_a)
+    rate_b, data_b = wavfile.read(wav_b)
+
+    assert rate_a == rate_b, "Sample rates must match"
+
+    # Normalize to float
+    a = data_a.astype(np.float32) / np.iinfo(data_a.dtype).max
+    b = data_b.astype(np.float32) / np.iinfo(data_b.dtype).max
+
+    # Use first 60 seconds for correlation (performance)
+    max_samples = rate_a * 60
+    a = a[:max_samples]
+    b = b[:max_samples]
+
+    # Cross-correlate
+    correlation = signal.correlate(a, b, mode="full")
+    lag_indices = signal.correlation_lags(len(a), len(b), mode="full")
+    best_lag = lag_indices[np.argmax(np.abs(correlation))]
+
+    offset_sec = best_lag / rate_a
+    confidence = np.max(np.abs(correlation)) / len(a)
+
+    log.info(f"Audio offset: {offset_sec:.4f}s (confidence: {confidence:.4f})")
+    return offset_sec
+
+def parse_ntp_timestamp(filename: str) -> datetime:
+    """Extract NTP timestamp from filename format:
+    minecraft_pc_20260328_153000_123456.mkv"""
+    parts = filename.split("_")
+    # Find date/time components
+    for i, part in enumerate(parts):
+        if len(part) == 8 and part.isdigit():
+            date_str = part
+            time_str = parts[i + 1]
+            micro_str = parts[i + 2].split(".")[0]
+            ts_str = f"{date_str}_{time_str}_{micro_str}"
+            return datetime.strptime(ts_str, "%Y%m%d_%H%M%S_%f")
+    raise ValueError(f"Cannot parse timestamp from: {filename}")
+
+def sync_by_ntp(file_a: Path, file_b: Path) -> float:
+    """Compute offset between two files based on NTP timestamps
+    embedded in filenames."""
+    ts_a = parse_ntp_timestamp(file_a.name)
+    ts_b = parse_ntp_timestamp(file_b.name)
+    offset = (ts_b - ts_a).total_seconds()
+    log.info(f"NTP-based offset: {offset:.3f}s")
+    return offset
+
+def trim_and_align(video_path: str, offset_sec: float,
+                   output_path: str) -> bool:
+    """Trim video to apply synchronization offset using FFmpeg."""
+    if offset_sec > 0:
+        # This video starts later ΓÇö trim the beginning of the other
+        cmd = [
+            "ffmpeg", "-y", "-ss", str(abs(offset_sec)),
+            "-i", video_path, "-c", "copy", output_path
+        ]
+    else:
+        # This video starts earlier ΓÇö trim its beginning
+        cmd = [
+            "ffmpeg", "-y", "-ss", str(abs(offset_sec)),
+            "-i", video_path, "-c", "copy", output_path
+        ]
+    try:
+        subprocess.run(cmd, capture_output=True, check=True)
+        return True
+    except subprocess.CalledProcessError as e:
+        log.error(f"Trim failed: {e.stderr.decode()}")
+        return False
+
+def collect_and_sync(config: dict, method: str = "audio_fingerprint"):
+    """Main sync workflow: find paired recordings and align them."""
+    raw_pc = Path(config["paths"]["raw_pc"])
+    raw_device = Path(config["paths"]["raw_device"])
+    synced_dir = Path(config["paths"]["synced"])
+    synced_dir.mkdir(parents=True, exist_ok=True)
+
+    pc_files = sorted(raw_pc.glob("*.mkv"))
+    device_files = sorted(raw_device.glob("*.mkv"))
+
+    if not pc_files:
+        log.warning("No PC recordings found.")
+        # Copy any device files as-is
+        for f in device_files:
+            shutil.copy2(f, synced_dir / f.name)
+        return
+
+    # Process the most recent PC recording
+    pc_file = pc_files[-1]
+    log.info(f"Processing PC recording: {pc_file.name}")
+
+    if device_files:
+        device_file = device_files[-1]
+        log.info(f"Processing device recording: {device_file.name}")
+
+        if method == "audio_fingerprint":
+            # Extract audio from both
+            wav_a = synced_dir / "temp_pc.wav"
+            wav_b = synced_dir / "temp_device.wav"
+            sr = config["sync"]["sample_rate"]
+
+            extract_audio_wav(str(pc_file), str(wav_a), sr)
+            extract_audio_wav(str(device_file), str(wav_b), sr)
+
+            offset = compute_audio_offset(str(wav_a), str(wav_b))
+
+            # Clean up temp WAVs
+            wav_a.unlink(missing_ok=True)
+            wav_b.unlink(missing_ok=True)
+
+        elif method == "ntp_timestamp":
+            offset = sync_by_ntp(pc_file, device_file)
+        else:
+            raise ValueError(f"Unknown sync method: {method}")
+
+        max_offset = config["sync"]["max_offset_sec"]
+        if abs(offset) > max_offset:
+            log.warning(
+                f"Offset {offset:.2f}s exceeds max ({max_offset}s). "
+                f"Files may not be from the same session."
+            )
+
+        # Apply offset: trim the file that starts earlier
+        if offset >= 0:
+            shutil.copy2(pc_file, synced_dir / f"pc_{pc_file.name}")
+            trim_and_align(
+                str(device_file), offset,
+                str(synced_dir / f"device_{device_file.name}")
+            )
+        else:
+            trim_and_align(
+                str(pc_file), abs(offset),
+                str(synced_dir / f"pc_{pc_file.name}")
+            )
+            shutil.copy2(
+                device_file,
+                synced_dir / f"device_{device_file.name}"
+            )
+
+        log.info("Sync complete ΓÇö paired files written to synced/")
+    else:
+        # Single-device mode ΓÇö just copy PC recording
+        log.info("No device recording ΓÇö single-source mode")
+        shutil.copy2(pc_file, synced_dir / f"pc_{pc_file.name}")
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Collect and sync multi-device recordings"
+    )
+    parser.add_argument("--config", default="../config/pipeline_config.yaml")
+    parser.add_argument("--method", default=None,
+                        choices=["audio_fingerprint", "ntp_timestamp"],
+                        help="Override sync method from config")
+    args = parser.parse_args()
+
+    config = load_config(args.config)
+    method = args.method or config["sync"]["method"]
+    collect_and_sync(config, method)
+
+if __name__ == "__main__":
+    main()
+5. Stage 3 ΓÇö Intelligent Highlight Detection
+This is the pipeline's core AI stage. It identifies the most exciting moments from raw gameplay using two complementary detection methods, then combines their signals with a weighted scoring system to rank and select the best highlights.
+5.1 Detection Methods
+5.2 Combined Scoring System
+VISUAL SCORE (0-100)             AUDIO SCORE (0-100)
+  ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ             ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ
+  Γöé Scene intensity  Γöé             Γöé Keyword matches  Γöé
+  Γöé ├ù threshold mult Γöé             Γöé ├ù keyword weight Γöé
+  Γöé + sustained      Γöé             Γöé + exclamation    Γöé
+  Γöé   action bonus   Γöé             Γöé   density bonus  Γöé
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ             ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ
+           Γöé                                Γöé
+           Γöé    ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ       Γöé
+           ΓööΓöÇΓöÇΓöÇ>Γöé  COMBINED SCORE   Γöé<ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ
+                Γöé                   Γöé
+                Γöé  0.6 ├ù visual     Γöé
+                Γöé +0.4 ├ù audio      Γöé
+                Γöé +bonus: both >50  Γöé
+                ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ
+                         Γöé
+                         Γû╝
+                ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ
+                Γöé  RANK & SELECT Γöé
+                Γöé  top N clips   Γöé
+                Γöé  (default: 12) Γöé
+                ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ
+5.3 Script: 03_highlight_detect.py
+"""
+03_highlight_detect.py ΓÇö AI-Powered Highlight Detection
+=======================================================
+Combines visual scene detection (PySceneDetect) with audio
+keyword detection (Whisper) to identify and rank the most
+exciting moments in gameplay recordings.
+
+Usage:
+    python 03_highlight_detect.py
+    python 03_highlight_detect.py --threshold 30 --max-highlights 10
+"""
+
+import json
+import subprocess
+import yaml
+import logging
+import argparse
+from pathlib import Path
+from dataclasses import dataclass, asdict
+
+import whisper
+import numpy as np
+from scenedetect import open_video, SceneManager
+from scenedetect.detectors import AdaptiveDetector
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("../logs/highlight_detect.log"),
+        logging.StreamHandler()
+    ]
+)
+log = logging.getLogger(__name__)
+
+@dataclass
+class Highlight:
+    """Represents a detected highlight moment."""
+    start_sec: float
+    end_sec: float
+    visual_score: float
+    audio_score: float
+    combined_score: float
+    source: str            # "visual", "audio", or "both"
+    keywords_found: list
+    description: str
+
+def load_config(path: str = "../config/pipeline_config.yaml") -> dict:
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+# ΓöÇΓöÇ METHOD A: Visual Scene Detection ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+def detect_visual_highlights(video_path: str,
+                             threshold: int = 27,
+                             min_scene_len: float = 2.0
+                             ) -> list[dict]:
+    """
+    Use PySceneDetect's AdaptiveDetector to find rapid scene
+    changes that indicate action sequences.
+    """
+    log.info(f"Running visual scene detection (threshold={threshold})...")
+    video = open_video(video_path)
+    scene_manager = SceneManager()
+    scene_manager.add_detector(
+        AdaptiveDetector(
+            adaptive_threshold=threshold,
+            min_scene_len=int(min_scene_len * video.frame_rate)
+        )
+    )
+    scene_manager.detect_scenes(video, show_progress=True)
+    scene_list = scene_manager.get_scene_list()
+
+    highlights = []
+    for i, (start, end) in enumerate(scene_list):
+        start_sec = start.get_seconds()
+        end_sec = end.get_seconds()
+        duration = end_sec - start_sec
+
+        # Score: shorter scenes = more intense action
+        # (rapid cuts indicate combat/excitement)
+        if duration < 5:
+            intensity = 90 + (5 - duration) * 2
+        elif duration < 15:
+            intensity = 60 + (15 - duration) * 2
+        elif duration < 30:
+            intensity = 30 + (30 - duration)
+        else:
+            intensity = max(10, 30 - (duration - 30))
+
+        intensity = min(100, max(0, intensity))
+
+        highlights.append({
+            "start_sec": start_sec,
+            "end_sec": end_sec,
+            "intensity": intensity,
+            "scene_index": i
+        })
+
+    log.info(f"Visual detection found {len(highlights)} scene changes")
+    return highlights
+
+# ΓöÇΓöÇ METHOD B: Audio Keyword Detection ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+def detect_audio_highlights(video_path: str,
+                            whisper_model: str = "base",
+                            keywords: list[str] = None
+                            ) -> tuple[list[dict], str]:
+    """
+    Transcribe audio with Whisper and search for excitement
+    keywords. Returns highlight moments and full transcript.
+    """
+    log.info(f"Running Whisper transcription (model={whisper_model})...")
+    model = whisper.load_model(whisper_model)
+    result = model.transcribe(
+        video_path,
+        language="en",
+        word_timestamps=True,
+        verbose=False
+    )
+
+    full_transcript = result["text"]
+    log.info(f"Transcription complete: {len(full_transcript)} characters")
+
+    if keywords is None:
+        keywords = [
+            "yes", "no", "oh my god", "wow", "died", "creeper",
+            "diamond", "ender", "let's go", "clutch", "insane",
+            "watch out", "run", "nether", "wither"
+        ]
+
+    # Keyword weights (some are more exciting than others)
+    keyword_weights = {
+        "diamond": 1.5, "ender": 1.5, "wither": 1.5,
+        "clutch": 1.8, "insane": 1.4, "oh my god": 1.6,
+        "died": 1.3, "creeper": 1.2, "let's go": 1.3,
+        "watch out": 1.2, "run": 1.0, "yes": 0.8,
+        "no": 0.7, "wow": 1.0, "nether": 1.1
+    }
+
+    highlights = []
+    for segment in result["segments"]:
+        segment_text = segment["text"].lower()
+        found_keywords = []
+        score = 0
+
+        for kw in keywords:
+            if kw.lower() in segment_text:
+                found_keywords.append(kw)
+                weight = keyword_weights.get(kw.lower(), 1.0)
+                score += 25 * weight
+
+        # Bonus for exclamation density
+        exclamation_count = segment_text.count("!")
+        score += exclamation_count * 10
+
+        # Bonus for ALL CAPS words (Whisper sometimes preserves)
+        caps_words = sum(
+            1 for w in segment_text.split() if w.isupper() and len(w) > 2
+        )
+        score += caps_words * 5
+
+        score = min(100, score)
+
+        if found_keywords or score > 20:
+            highlights.append({
+                "start_sec": segment["start"],
+                "end_sec": segment["end"],
+                "score": score,
+                "keywords": found_keywords,
+                "text": segment["text"].strip()
+            })
+
+    log.info(f"Audio detection found {len(highlights)} keyword moments")
+    return highlights, full_transcript
+
+# ΓöÇΓöÇ COMBINED SCORING & RANKING ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+def merge_and_rank_highlights(visual_hits: list[dict],
+                              audio_hits: list[dict],
+                              clip_padding: float = 15.0,
+                              max_highlights: int = 12,
+                              target_duration_min: float = 12.0
+                              ) -> list[Highlight]:
+    """
+    Merge visual and audio highlights, compute combined scores,
+    and select the top N non-overlapping highlights.
+    """
+    candidates = []
+
+    # Process visual highlights
+    for vh in visual_hits:
+        mid = (vh["start_sec"] + vh["end_sec"]) / 2
+        clip_start = max(0, mid - clip_padding)
+        clip_end = mid + clip_padding
+
+        # Check if any audio highlight overlaps
+        overlapping_audio = [
+            ah for ah in audio_hits
+            if ah["start_sec"] < clip_end and ah["end_sec"] > clip_start
+        ]
+
+        audio_score = 0
+        keywords = []
+        if overlapping_audio:
+            audio_score = max(ah["score"] for ah in overlapping_audio)
+            for ah in overlapping_audio:
+                keywords.extend(ah.get("keywords", []))
+
+        visual_score = vh["intensity"]
+
+        # Combined score: 60% visual + 40% audio + bonus
+        combined = 0.6 * visual_score + 0.4 * audio_score
+        if visual_score > 50 and audio_score > 50:
+            combined += 15  # Synergy bonus
+        combined = min(100, combined)
+
+        source = "both" if overlapping_audio else "visual"
+
+        candidates.append(Highlight(
+            start_sec=clip_start,
+            end_sec=clip_end,
+            visual_score=visual_score,
+            audio_score=audio_score,
+            combined_score=combined,
+            source=source,
+            keywords_found=list(set(keywords)),
+            description=f"Scene change at {mid:.1f}s"
+        ))
+
+    # Process audio-only highlights (not already captured by visual)
+    for ah in audio_hits:
+        mid = (ah["start_sec"] + ah["end_sec"]) / 2
+        clip_start = max(0, mid - clip_padding)
+        clip_end = mid + clip_padding
+
+        already_covered = any(
+            c.start_sec <= data-id="364" mid <= c.end_sec for c in candidates
+        )
+        if already_covered:
+            continue
+
+        combined = 0.4 * ah["score"]  # Audio-only (no visual component)
+        candidates.append(Highlight(
+            start_sec=clip_start,
+            end_sec=clip_end,
+            visual_score=0,
+            audio_score=ah["score"],
+            combined_score=combined,
+            source="audio",
+            keywords_found=ah.get("keywords", []),
+            description=ah.get("text", "")[:80]
+        ))
+
+    # Sort by combined score (descending)
+    candidates.sort(key=lambda h: h.combined_score, reverse=True)
+
+    # Select top highlights, removing overlaps
+    selected = []
+    for candidate in candidates:
+        if len(selected) >= max_highlights:
+            break
+        # Check for overlap with already-selected highlights
+        overlaps = any(
+            s.start_sec < candidate.end_sec and
+            s.end_sec > candidate.start_sec
+            for s in selected
+        )
+        if not overlaps:
+            selected.append(candidate)
+
+    # Sort selected by time (chronological order for assembly)
+    selected.sort(key=lambda h: h.start_sec)
+
+    total_duration = sum(h.end_sec - h.start_sec for h in selected)
+    log.info(
+        f"Selected {len(selected)} highlights, "
+        f"total duration: {total_duration / 60:.1f} min"
+    )
+
+    return selected
+
+# ΓöÇΓöÇ CLIP EXTRACTION ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+def extract_highlight_clips(video_path: str,
+                            highlights: list[Highlight],
+                            output_dir: str) -> list[str]:
+    """Extract highlight segments from video using FFmpeg."""
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    clip_paths = []
+
+    for i, hl in enumerate(highlights):
+        clip_file = output_path / f"highlight_{i:03d}.mkv"
+        duration = hl.end_sec - hl.start_sec
+        cmd = [
+            "ffmpeg", "-y",
+            "-ss", f"{hl.start_sec:.3f}",
+            "-i", video_path,
+            "-t", f"{duration:.3f}",
+            "-c", "copy",
+            "-avoid_negative_ts", "make_zero",
+            str(clip_file)
+        ]
+        try:
+            subprocess.run(cmd, capture_output=True, check=True)
+            clip_paths.append(str(clip_file))
+            log.info(
+                f"  Clip {i+1}/{len(highlights)}: "
+                f"{hl.start_sec:.1f}s-{hl.end_sec:.1f}s "
+                f"(score: {hl.combined_score:.1f})"
+            )
+        except subprocess.CalledProcessError as e:
+            log.error(f"Failed to extract clip {i}: {e.stderr.decode()}")
+
+    return clip_paths
+
+# ΓöÇΓöÇ MAIN ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+def main():
+    parser = argparse.ArgumentParser(
+        description="AI-powered highlight detection"
+    )
+    parser.add_argument("--config", default="../config/pipeline_config.yaml")
+    parser.add_argument("--threshold", type=int, default=None)
+    parser.add_argument("--max-highlights", type=int, default=None)
+    parser.add_argument("--whisper-model", default=None)
+    args = parser.parse_args()
+
+    config = load_config(args.config)
+    hl_config = config["highlights"]
+
+    threshold = args.threshold or hl_config["scene_threshold"]
+    max_hl = args.max_highlights or hl_config["max_highlights"]
+    wh_model = args.whisper_model or hl_config["whisper_model"]
+    keywords = hl_config["excitement_keywords"]
+    padding = hl_config["clip_padding_sec"]
+    target_min = hl_config["target_duration_min"]
+
+    # Find the primary synced recording
+    synced_dir = Path(config["paths"]["synced"])
+    video_files = sorted(synced_dir.glob("pc_*.mkv"))
+    if not video_files:
+        log.error("No synced PC recordings found!")
+        return
+    video_path = str(video_files[-1])
+    log.info(f"Analyzing: {video_path}")
+
+    # Run both detection methods
+    visual_hits = detect_visual_highlights(
+        video_path, threshold=threshold
+    )
+    audio_hits, transcript = detect_audio_highlights(
+        video_path, whisper_model=wh_model, keywords=keywords
+    )
+
+    # Merge and rank
+    highlights = merge_and_rank_highlights(
+        visual_hits, audio_hits,
+        clip_padding=padding,
+        max_highlights=max_hl,
+        target_duration_min=target_min
+    )
+
+    # Extract clips
+    clip_dir = config["paths"]["highlights"]
+    clip_paths = extract_highlight_clips(video_path, highlights, clip_dir)
+
+    # Save highlight data and transcript
+    output_data = {
+        "source_video": video_path,
+        "detection_params": {
+            "visual_threshold": threshold,
+            "whisper_model": wh_model,
+            "clip_padding_sec": padding,
+            "max_highlights": max_hl
+        },
+        "highlights": [asdict(h) for h in highlights],
+        "clip_paths": clip_paths,
+        "transcript": transcript
+    }
+    output_file = Path(clip_dir) / "highlights.json"
+    with open(output_file, "w") as f:
+        json.dump(output_data, f, indent=2)
+
+    log.info(f"Highlight data saved to {output_file}")
+
+if __name__ == "__main__":
+    main()
+6. Stage 4 ΓÇö Video Assembly & Branding
+Stage 4 takes the ranked highlight clips and assembles them into a polished video with professional branding: intro/outro sequences, logo watermark, optional picture-in-picture compositing when dual feeds are available, and cross-fade transitions between clips.
+6.1 Key FFmpeg Commands
+Logo Overlay with Transparency
+ffmpeg -i input.mp4 -i logo.png -filter_complex ^
+  "[1:v]format=rgba,colorchannelmixer=aa=0.5[logo]; ^
+   [0:v][logo]overlay=W-w-20:H-h-20" ^
+  -c:a copy output.mp4
+Picture-in-Picture Compositing
+ffmpeg -i main_feed.mp4 -i child_feed.mp4 -filter_complex ^
+  "[1:v]scale=320:180[pip]; ^
+   [0:v][pip]overlay=W-w-10:10" ^
+  -c:a copy pip_output.mp4
+Intro/Outro Concatenation with Crossfade
+ffmpeg -i intro.mp4 -i main_content.mp4 -i outro.mp4 -filter_complex ^
+  "[0:v][1:v]xfade=transition=fade:duration=0.5:offset=4.5[v01]; ^
+   [v01][2:v]xfade=transition=fade:duration=0.5:offset=CALC[vout]; ^
+   [0:a][1:a]acrossfade=d=0.5[a01]; ^
+   [a01][2:a]acrossfade=d=0.5[aout]" ^
+  -map "[vout]" -map "[aout]" final.mp4
+Color Normalization Across Clips
+ffmpeg -i input.mp4 -vf "normalize=blackpt=black:whitept=white:smoothing=20" ^
+  -c:a copy normalized.mp4
+6.2 Script: 04_assemble_brand.py
+"""
+04_assemble_brand.py ΓÇö Video Assembly & Branding
+================================================
+Assembles highlight clips into a branded video with intro,
+outro, logo watermark, and optional picture-in-picture.
+
+Usage:
+    python 04_assemble_brand.py
+"""
+
+import json
+import subprocess
+import yaml
+import logging
+import tempfile
+from pathlib import Path
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("../logs/assemble_brand.log"),
+        logging.StreamHandler()
+    ]
+)
+log = logging.getLogger(__name__)
+
+def load_config(path: str = "../config/pipeline_config.yaml") -> dict:
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+def get_video_duration(video_path: str) -> float:
+    """Get video duration in seconds using ffprobe."""
+    cmd = [
+        "ffprobe", "-v", "quiet", "-print_format", "json",
+        "-show_format", video_path
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    data = json.loads(result.stdout)
+    return float(data["format"]["duration"])
+
+def concatenate_clips(clip_paths: list[str], output_path: str,
+                      crossfade_sec: float = 0.5) -> bool:
+    """Concatenate multiple clips using FFmpeg concat demuxer."""
+    # Create concat file list
+    concat_file = Path(output_path).parent / "concat_list.txt"
+    with open(concat_file, "w") as f:
+        for clip in clip_paths:
+            f.write(f"file '{Path(clip).resolve()}'\n")
+
+    cmd = [
+        "ffmpeg", "-y", "-f", "concat", "-safe", "0",
+        "-i", str(concat_file),
+        "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+        "-c:a", "aac", "-b:a", "192k",
+        "-movflags", "+faststart",
+        output_path
+    ]
+    try:
+        subprocess.run(cmd, capture_output=True, check=True)
+        concat_file.unlink(missing_ok=True)
+        log.info(f"Concatenated {len(clip_paths)} clips ΓåÆ {output_path}")
+        return True
+    except subprocess.CalledProcessError as e:
+        log.error(f"Concatenation failed: {e.stderr.decode()}")
+        return False
+
+def add_branding(input_path: str, output_path: str,
+                 config: dict) -> bool:
+    """Apply logo watermark and branding to the video."""
+    assets = config["assets"]
+    assembly = config["assembly"]
+    logo = assets["logo"]
+    opacity = assembly["logo_opacity"]
+
+    # Build filter graph
+    filters = []
+
+    # Logo overlay with opacity
+    logo_filter = (
+        f"[1:v]format=rgba,"
+        f"colorchannelmixer=aa={opacity}[logo];"
+        f"[0:v][logo]overlay=W-w-20:H-h-20"
+    )
+    filters.append(logo_filter)
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", input_path,
+        "-i", logo,
+        "-filter_complex", ";".join(filters) if len(filters) > 1
+                           else filters[0],
+        "-c:v", "libx264", "-preset", "medium",
+        "-crf", str(assembly["crf"]),
+        "-c:a", "aac", "-b:a", "192k",
+        "-movflags", "+faststart",
+        output_path
+    ]
+    try:
+        subprocess.run(cmd, capture_output=True, check=True)
+        log.info(f"Branding applied ΓåÆ {output_path}")
+        return True
+    except subprocess.CalledProcessError as e:
+        log.error(f"Branding failed: {e.stderr.decode()}")
+        return False
+
+def add_intro_outro(content_path: str, output_path: str,
+                    intro_path: str, outro_path: str) -> bool:
+    """Prepend intro and append outro using concat demuxer."""
+    clips = []
+    if Path(intro_path).exists():
+        clips.append(intro_path)
+    clips.append(content_path)
+    if Path(outro_path).exists():
+        clips.append(outro_path)
+    return concatenate_clips(clips, output_path)
+
+def create_pip_composite(main_video: str, pip_video: str,
+                         output_path: str, config: dict) -> bool:
+    """Create picture-in-picture composite from dual feeds."""
+    assembly = config["assembly"]
+    pip_size = assembly["pip_size"]  # e.g., "320x180"
+    w, h = pip_size.split("x")
+
+    position = assembly["pip_position"]
+    if position == "top-right":
+        overlay_pos = f"W-{w}-10:10"
+    elif position == "top-left":
+        overlay_pos = f"10:10"
+    elif position == "bottom-left":
+        overlay_pos = f"10:H-{h}-10"
+    else:  # bottom-right
+        overlay_pos = f"W-{w}-10:H-{h}-10"
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", main_video,
+        "-i", pip_video,
+        "-filter_complex",
+        f"[1:v]scale={pip_size}[pip];"
+        f"[0:v][pip]overlay={overlay_pos}",
+        "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+        "-c:a", "aac", "-b:a", "192k",
+        output_path
+    ]
+    try:
+        subprocess.run(cmd, capture_output=True, check=True)
+        log.info(f"PiP composite created ΓåÆ {output_path}")
+        return True
+    except subprocess.CalledProcessError as e:
+        log.error(f"PiP failed: {e.stderr.decode()}")
+        return False
+
+def main():
+    config = load_config()
+    assembly_cfg = config["assembly"]
+    assets = config["assets"]
+
+    # Load highlight data
+    hl_file = Path(config["paths"]["highlights"]) / "highlights.json"
+    with open(hl_file) as f:
+        hl_data = json.load(f)
+
+    clip_paths = hl_data["clip_paths"]
+    if not clip_paths:
+        log.error("No highlight clips to assemble!")
+        return
+
+    branded_dir = Path(config["paths"]["branded"])
+    branded_dir.mkdir(parents=True, exist_ok=True)
+
+    # Step 1: Concatenate highlight clips
+    concat_path = str(branded_dir / "concatenated.mp4")
+    concatenate_clips(clip_paths, concat_path)
+
+    # Step 2: Add branding (logo watermark)
+    branded_path = str(branded_dir / "branded.mp4")
+    add_branding(concat_path, branded_path, config)
+
+    # Step 3: Check for dual-feed PiP
+    synced_dir = Path(config["paths"]["synced"])
+    device_files = sorted(synced_dir.glob("device_*.mkv"))
+    if device_files and assembly_cfg.get("pip_enabled"):
+        pip_path = str(branded_dir / "branded_pip.mp4")
+        create_pip_composite(branded_path, str(device_files[-1]),
+                             pip_path, config)
+        branded_path = pip_path
+
+    # Step 4: Add intro and outro
+    final_path = str(branded_dir / "final_branded.mp4")
+    add_intro_outro(
+        branded_path, final_path,
+        intro_path=assets["intro"],
+        outro_path=assets["outro"]
+    )
+
+    log.info(f"Assembly complete: {final_path}")
+    duration = get_video_duration(final_path)
+    log.info(f"Final duration: {duration / 60:.1f} minutes")
+
+if __name__ == "__main__":
+    main()
+7. Stage 5 ΓÇö Automated Captioning
+Captions boost accessibility and engagement (YouTube reports higher watch time for captioned gaming videos). Stage 5 re-transcribes the assembled video at higher quality, generates an SRT file, then burns styled subtitles into the video for immediate visual impact.
+7.1 Script: 05_caption.py
+"""
+05_caption.py ΓÇö Automated Captioning with Whisper
+=================================================
+Transcribes the assembled video with Whisper, generates SRT
+subtitles, and burns them into the video with styled rendering.
+
+Usage:
+    python 05_caption.py
+    python 05_caption.py --model medium --burn-in
+"""
+
+import whisper
+import subprocess
+import yaml
+import logging
+import argparse
+from pathlib import Path
+from datetime import timedelta
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("../logs/caption.log"),
+        logging.StreamHandler()
+    ]
+)
+log = logging.getLogger(__name__)
+
+def load_config(path: str = "../config/pipeline_config.yaml") -> dict:
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+def format_srt_timestamp(seconds: float) -> str:
+    """Convert seconds to SRT timestamp format (HH:MM:SS,mmm)."""
+    td = timedelta(seconds=seconds)
+    total_seconds = int(td.total_seconds())
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    secs = total_seconds % 60
+    millis = int((seconds - int(seconds)) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
+
+def transcribe_to_srt(video_path: str, model_name: str = "medium",
+                      language: str = "en") -> tuple[str, str]:
+    """
+    Transcribe video audio and generate SRT subtitle content.
+    Returns (srt_content, raw_transcript).
+    """
+    log.info(f"Transcribing with Whisper model '{model_name}'...")
+    model = whisper.load_model(model_name)
+    result = model.transcribe(
+        video_path,
+        language=language,
+        word_timestamps=True,
+        verbose=False
+    )
+
+    srt_lines = []
+    for i, segment in enumerate(result["segments"], 1):
+        start = format_srt_timestamp(segment["start"])
+        end = format_srt_timestamp(segment["end"])
+        text = segment["text"].strip()
+
+        srt_lines.append(f"{i}")
+        srt_lines.append(f"{start} --> {end}")
+        srt_lines.append(text)
+        srt_lines.append("")  # Blank line between entries
+
+    srt_content = "\n".join(srt_lines)
+    log.info(f"Generated {len(result['segments'])} subtitle segments")
+    return srt_content, result["text"]
+
+def burn_subtitles(video_path: str, srt_path: str,
+                   output_path: str, style: dict) -> bool:
+    """
+    Burn SRT subtitles into video using FFmpeg's subtitles filter
+    with ASS-style formatting for readability on gameplay.
+    """
+    font = style.get("font", "Arial")
+    font_size = style.get("font_size", 22)
+    primary_color = style.get("primary_color", "&H00FFFFFF")
+    outline_color = style.get("outline_color", "&H00000000")
+    outline_width = style.get("outline_width", 2)
+    margin_v = style.get("margin_v", 40)
+
+    # FFmpeg subtitle filter with force_style
+    force_style = (
+        f"FontName={font},"
+        f"FontSize={font_size},"
+        f"PrimaryColour={primary_color},"
+        f"OutlineColour={outline_color},"
+        f"Outline={outline_width},"
+        f"MarginV={margin_v},"
+        f"Bold=1,"
+        f"Shadow=1"
+    )
+
+    # Escape path separators for FFmpeg filter
+    srt_escaped = str(srt_path).replace("\\", "/").replace(":", "\\\\:")
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", video_path,
+        "-vf", f"subtitles='{srt_escaped}':force_style='{force_style}'",
+        "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+        "-c:a", "copy",
+        "-movflags", "+faststart",
+        output_path
+    ]
+    try:
+        subprocess.run(cmd, capture_output=True, check=True)
+        log.info(f"Subtitles burned in ΓåÆ {output_path}")
+        return True
+    except subprocess.CalledProcessError as e:
+        log.error(f"Subtitle burn-in failed: {e.stderr.decode()}")
+        return False
+
+def main():
+    parser = argparse.ArgumentParser(description="Automated captioning")
+    parser.add_argument("--config", default="../config/pipeline_config.yaml")
+    parser.add_argument("--model", default=None)
+    parser.add_argument("--no-burn-in", action="store_true",
+                        help="Generate SRT only, skip burn-in")
+    args = parser.parse_args()
+
+    config = load_config(args.config)
+    cap_config = config["captioning"]
+    model_name = args.model or cap_config["whisper_model"]
+    language = cap_config["language"]
+    style = cap_config["subtitle_style"]
+
+    # Find branded video
+    branded_dir = Path(config["paths"]["branded"])
+    branded_files = sorted(branded_dir.glob("final_branded*.mp4"))
+    if not branded_files:
+        log.error("No branded video found!")
+        return
+    video_path = str(branded_files[-1])
+
+    captioned_dir = Path(config["paths"]["captioned"])
+    captioned_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate SRT
+    srt_content, transcript = transcribe_to_srt(
+        video_path, model_name, language
+    )
+    srt_path = captioned_dir / "captions.srt"
+    srt_path.write_text(srt_content, encoding="utf-8")
+    log.info(f"SRT saved: {srt_path}")
+
+    # Save transcript for metadata stage
+    transcript_path = captioned_dir / "transcript.txt"
+    transcript_path.write_text(transcript, encoding="utf-8")
+
+    # Burn subtitles into video
+    if not args.no_burn_in:
+        output_path = str(captioned_dir / "captioned_final.mp4")
+        burn_subtitles(video_path, str(srt_path), output_path, style)
+    else:
+        log.info("Burn-in skipped (--no-burn-in flag)")
+
+if __name__ == "__main__":
+    main()
+8. Stage 6 ΓÇö Automated Thumbnail Generation
+YouTube thumbnails are the single biggest driver of click-through rate. Stage 6 extracts the most visually interesting frame from the video, then composites it with text, gradient overlays, and branding using Pillow to create a professional 1280├ù720 thumbnail.
+8.1 Script: 06_thumbnail.py
+"""
+06_thumbnail.py ΓÇö Automated Thumbnail Generation
+=================================================
+Extracts the best frame from the video and composites a
+YouTube-ready thumbnail with title text, gradient overlay,
+channel logo, and episode badge.
+
+Usage:
+    python 06_thumbnail.py --title "We Found DIAMONDS!" --episode 14
+"""
+
+import subprocess
+import json
+import yaml
+import logging
+import argparse
+import struct
+from pathlib import Path
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("../logs/thumbnail.log"),
+        logging.StreamHandler()
+    ]
+)
+log = logging.getLogger(__name__)
+
+def load_config(path: str = "../config/pipeline_config.yaml") -> dict:
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+def extract_candidate_frames(video_path: str, output_dir: str,
+                             num_frames: int = 20) -> list[str]:
+    """
+    Extract evenly-spaced candidate frames from the video.
+    Returns list of frame image paths.
+    """
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+    # Get video duration
+    probe_cmd = [
+        "ffprobe", "-v", "quiet", "-print_format", "json",
+        "-show_format", video_path
+    ]
+    result = subprocess.run(probe_cmd, capture_output=True, text=True)
+    duration = float(json.loads(result.stdout)["format"]["duration"])
+
+    frame_paths = []
+    interval = duration / (num_frames + 1)
+
+    for i in range(num_frames):
+        timestamp = interval * (i + 1)
+        frame_path = f"{output_dir}/frame_{i:03d}.jpg"
+        cmd = [
+            "ffmpeg", "-y", "-ss", str(timestamp),
+            "-i", video_path,
+            "-frames:v", "1",
+            "-q:v", "2",
+            frame_path
+        ]
+        subprocess.run(cmd, capture_output=True, check=True)
+        frame_paths.append(frame_path)
+
+    log.info(f"Extracted {len(frame_paths)} candidate frames")
+    return frame_paths
+
+def score_frame_visual_interest(frame_path: str) -> float:
+    """
+    Score a frame's visual interest based on color variance,
+    saturation, and edge density. Higher = more interesting.
+    """
+    img = Image.open(frame_path).convert("RGB")
+    import numpy as np
+
+    pixels = np.array(img, dtype=np.float32)
+
+    # Color variance (more colorful = more interesting)
+    color_var = np.std(pixels)
+
+    # Saturation (convert to HSV-like metric)
+    r, g, b = pixels[:,:,0], pixels[:,:,1], pixels[:,:,2]
+    max_c = np.maximum(np.maximum(r, g), b)
+    min_c = np.minimum(np.minimum(r, g), b)
+    saturation = np.mean(max_c - min_c)
+
+    # Brightness (avoid too dark or too bright)
+    brightness = np.mean(pixels)
+    brightness_penalty = abs(brightness - 128) * 0.3
+
+    score = color_var * 0.4 + saturation * 0.4 - brightness_penalty
+    return score
+
+def select_best_frame(frame_paths: list[str]) -> str:
+    """Select the frame with the highest visual interest score."""
+    scored = [(fp, score_frame_visual_interest(fp)) for fp in frame_paths]
+    scored.sort(key=lambda x: x[1], reverse=True)
+
+    best_path, best_score = scored[0]
+    log.info(f"Best frame: {best_path} (score: {best_score:.2f})")
+    return best_path
+
+def composite_thumbnail(frame_path: str, output_path: str,
+                        config: dict, title: str = "",
+                        episode: int = None) -> str:
+    """
+    Composite the final thumbnail with gradient overlay,
+    title text, logo, and episode badge.
+    """
+    thumb_cfg = config["thumbnail"]
+    width = thumb_cfg["width"]       # 1280
+    height = thumb_cfg["height"]     # 720
+
+    # Load and resize background frame
+    bg = Image.open(frame_path).convert("RGBA")
+    bg = bg.resize((width, height), Image.LANCZOS)
+
+    # Slight sharpening for thumbnail clarity
+    bg = bg.filter(ImageFilter.SHARPEN)
+
+    # Create gradient overlay for text readability
+    gradient = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    draw_gradient = ImageDraw.Draw(gradient)
+    opacity = int(thumb_cfg["gradient_opacity"] * 255)
+
+    # Bottom gradient (for title text)
+    for y in range(height // 2, height):
+        progress = (y - height // 2) / (height // 2)
+        alpha = int(opacity * progress)
+        draw_gradient.rectangle(
+            [(0, y), (width, y + 1)],
+            fill=(0, 0, 0, alpha)
+        )
+
+    # Top-left gradient (for episode badge)
+    for y in range(0, height // 4):
+        progress = 1 - (y / (height // 4))
+        alpha = int(opacity * 0.6 * progress)
+        draw_gradient.rectangle(
+            [(0, y), (width // 3, y + 1)],
+            fill=(0, 0, 0, alpha)
+        )
+
+    bg = Image.alpha_composite(bg, gradient)
+
+    # Draw title text
+    draw = ImageDraw.Draw(bg)
+    font_path = config["assets"]["thumbnail_font"]
+    title_size = thumb_cfg["title_font_size"]
+
+    try:
+        font = ImageFont.truetype(font_path, title_size)
+    except (IOError, OSError):
+        log.warning(f"Font not found: {font_path}, using default")
+        font = ImageFont.load_default()
+
+    if title:
+        # Text shadow
+        shadow_offset = 3
+        shadow_color = thumb_cfg["title_shadow_color"]
+        title_color = thumb_cfg["title_color"]
+
+        # Word wrap for long titles
+        max_width = width - 80
+        words = title.split()
+        lines = []
+        current_line = ""
+        for word in words:
+            test_line = f"{current_line} {word}".strip()
+            bbox = draw.textbbox((0, 0), test_line, font=font)
+            if bbox[2] - bbox[0] <= data-id="428" max_width:
+                current_line = test_line
+            else:
+                if current_line:
+                    lines.append(current_line)
+                current_line = word
+        if current_line:
+            lines.append(current_line)
+
+        # Position text at bottom
+        line_height = title_size + 8
+        text_y = height - 40 - (len(lines) * line_height)
+
+        for line in lines:
+            # Shadow
+            draw.text(
+                (42 + shadow_offset, text_y + shadow_offset),
+                line, font=font, fill=shadow_color
+            )
+            # Main text
+            draw.text(
+                (42, text_y), line, font=font, fill=title_color
+            )
+            text_y += line_height
+
+    # Add channel logo (top-right corner)
+    logo_path = config["assets"]["logo"]
+    if Path(logo_path).exists():
+        logo = Image.open(logo_path).convert("RGBA")
+        logo_size = thumb_cfg["logo_size"]
+        logo = logo.resize((logo_size, logo_size), Image.LANCZOS)
+        logo_x = width - logo_size - 20
+        logo_y = 20
+        bg.paste(logo, (logo_x, logo_y), logo)
+
+    # Episode badge (top-left)
+    if episode is not None and thumb_cfg.get("episode_badge"):
+        badge_font_size = 32
+        try:
+            badge_font = ImageFont.truetype(font_path, badge_font_size)
+        except (IOError, OSError):
+            badge_font = ImageFont.load_default()
+
+        badge_text = f"EP {episode}"
+        bbox = draw.textbbox((0, 0), badge_text, font=badge_font)
+        badge_w = bbox[2] - bbox[0] + 24
+        badge_h = bbox[3] - bbox[1] + 16
+
+        # Red badge background
+        draw.rectangle(
+            [(16, 16), (16 + badge_w, 16 + badge_h)],
+            fill="#E63946"
+        )
+        draw.text(
+            (28, 20), badge_text, font=badge_font, fill="#FFFFFF"
+        )
+
+    # Convert to RGB and save as JPEG
+    final = bg.convert("RGB")
+    final.save(output_path, "JPEG", quality=95)
+    log.info(f"Thumbnail saved: {output_path} ({width}x{height})")
+    return output_path
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Generate YouTube thumbnail"
+    )
+    parser.add_argument("--config", default="../config/pipeline_config.yaml")
+    parser.add_argument("--title", default="Minecraft Highlights")
+    parser.add_argument("--episode", type=int, default=None)
+    args = parser.parse_args()
+
+    config = load_config(args.config)
+
+    # Find captioned video
+    captioned_dir = Path(config["paths"]["captioned"])
+    video_files = sorted(captioned_dir.glob("captioned_final*.mp4"))
+    if not video_files:
+        # Fall back to branded
+        branded_dir = Path(config["paths"]["branded"])
+        video_files = sorted(branded_dir.glob("final_branded*.mp4"))
+    if not video_files:
+        log.error("No video found for thumbnail extraction!")
+        return
+
+    video_path = str(video_files[-1])
+    thumb_dir = Path(config["paths"]["thumbnails"])
+    thumb_dir.mkdir(parents=True, exist_ok=True)
+
+    # Extract and score frames
+    temp_frames_dir = str(thumb_dir / "temp_frames")
+    frame_paths = extract_candidate_frames(
+        video_path, temp_frames_dir, num_frames=20
+    )
+    best_frame = select_best_frame(frame_paths)
+
+    # Composite thumbnail
+    output_path = str(thumb_dir / "thumbnail_1280x720.jpg")
+    composite_thumbnail(
+        best_frame, output_path, config,
+        title=args.title, episode=args.episode
+    )
+
+    # Clean up temp frames
+    import shutil
+    shutil.rmtree(temp_frames_dir, ignore_errors=True)
+
+if __name__ == "__main__":
+    main()
+9. Stage 7 ΓÇö AI Metadata Drafting
+Compelling titles, descriptions, and tags drive discoverability. Stage 7 feeds the Whisper transcript from Stage 5 into the OpenAI API (or a local LLM) and asks it to generate YouTube-optimized metadata, then saves the result as a structured JSON file for Stage 8.
+9.1 Script: 07_metadata.py
+"""
+07_metadata.py ΓÇö AI Metadata Drafting
+=====================================
+Analyzes the transcript and generates YouTube-optimized
+title, description, tags, and category using OpenAI GPT
+or a local LLM, with template fallback.
+
+Usage:
+    python 07_metadata.py
+    python 07_metadata.py --provider template
+"""
+
+import json
+import yaml
+import logging
+import argparse
+from pathlib import Path
+from datetime import datetime
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("../logs/metadata.log"),
+        logging.StreamHandler()
+    ]
+)
+log = logging.getLogger(__name__)
+
+def load_config(path: str = "../config/pipeline_config.yaml") -> dict:
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+def generate_metadata_openai(transcript: str, config: dict) -> dict:
+    """Generate metadata using OpenAI GPT API."""
+    from openai import OpenAI
+
+    meta_cfg = config["metadata_ai"]
+    client = OpenAI()  # Uses OPENAI_API_KEY env var
+
+    prompt = f"""You are a YouTube SEO expert for Minecraft gaming content.
+Analyze this gameplay transcript and generate optimized YouTube metadata.
+
+TRANSCRIPT (first 3000 chars):
+{transcript[:3000]}
+
+Generate a JSON object with:
+1. "title": Catchy title under {meta_cfg['max_title_length']} characters.
+   Include a compelling hook and Minecraft keywords.
+2. "description": Structured description with:
+   - Hook paragraph (2 sentences)
+   - Content summary (what happens in this episode)
+   - Timestamps section placeholder
+   - Social links placeholder
+   - Hashtags (3-5)
+3. "tags": Array of {meta_cfg['max_tags']} relevant keywords/phrases
+4. "category_id": "{meta_cfg['default_category_id']}"
+
+Return ONLY valid JSON, no markdown formatting."""
+
+    response = client.chat.completions.create(
+        model=meta_cfg["openai_model"],
+        messages=[
+            {"role": "system", "content": "You generate YouTube metadata as JSON."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.7,
+        max_tokens=1000
+    )
+
+    raw_text = response.choices[0].message.content.strip()
+
+    # Clean potential markdown code fences
+    if raw_text.startswith("```"):
+        raw_text = raw_text.split("```")[1]
+        if raw_text.startswith("json"):
+            raw_text = raw_text[4:]
+
+    metadata = json.loads(raw_text)
+    log.info(f"AI-generated title: {metadata.get('title', 'N/A')}")
+    return metadata
+
+def generate_metadata_template(transcript: str, config: dict) -> dict:
+    """Fallback: Generate metadata from templates (no AI needed)."""
+    meta_cfg = config["metadata_ai"]
+
+    # Extract notable words from transcript
+    notable_words = [
+        "diamond", "diamonds", "ender", "dragon", "nether",
+        "wither", "creeper", "enchant", "villager", "raid",
+        "cave", "ocean", "monument", "stronghold", "blaze",
+        "netherite", "elytra", "shulker"
+    ]
+    found = [
+        w for w in notable_words
+        if w.lower() in transcript.lower()
+    ]
+
+    # Generate title from found keywords
+    if found:
+        highlight = found[0].title()
+        title = f"Minecraft Survival ΓÇö We Found {highlight}!"
+    else:
+        title = f"Minecraft Survival ΓÇö Epic Gameplay Highlights"
+
+    title = title[:meta_cfg["max_title_length"]]
+
+    now = datetime.now().strftime("%B %d, %Y")
+    description = f"""{title}
+
+In this episode, we dive into another exciting Minecraft session!
+Watch as we explore, build, and survive the blocky wilderness.
+
+========================================
+TIMESTAMPS
+========================================
+0:00 - Intro
+0:15 - Gameplay Begins
+(Timestamps auto-generated ΓÇö edit before publishing)
+
+========================================
+ABOUT
+========================================
+Family-friendly Minecraft content recorded and produced
+with an automated pipeline. New episodes posted regularly!
+
+{' '.join(meta_cfg.get('default_hashtags', ['#Minecraft']))}
+"""
+
+    tags = [
+        "Minecraft", "Minecraft gameplay", "Minecraft survival",
+        "Minecraft highlights", "gaming", "let's play Minecraft",
+        "Minecraft 2026", "Minecraft Bedrock", "Minecraft Java",
+        "family friendly Minecraft", "Minecraft tips"
+    ]
+    # Add found keywords as tags
+    tags.extend([w.title() for w in found if w.title() not in tags])
+    tags = tags[:meta_cfg["max_tags"]]
+
+    return {
+        "title": title,
+        "description": description,
+        "tags": tags,
+        "category_id": meta_cfg["default_category_id"]
+    }
+
+def main():
+    parser = argparse.ArgumentParser(description="Generate YouTube metadata")
+    parser.add_argument("--config", default="../config/pipeline_config.yaml")
+    parser.add_argument("--provider", default=None,
+                        choices=["openai", "template"],
+                        help="Override metadata provider")
+    args = parser.parse_args()
+
+    config = load_config(args.config)
+    meta_cfg = config["metadata_ai"]
+    provider = args.provider or meta_cfg["provider"]
+
+    # Load transcript
+    captioned_dir = Path(config["paths"]["captioned"])
+    transcript_path = captioned_dir / "transcript.txt"
+    if not transcript_path.exists():
+        log.error("Transcript not found! Run captioning stage first.")
+        return
+    transcript = transcript_path.read_text(encoding="utf-8")
+
+    # Generate metadata
+    if provider == "openai":
+        try:
+            metadata = generate_metadata_openai(transcript, config)
+        except Exception as e:
+            log.warning(f"OpenAI failed ({e}), falling back to template")
+            metadata = generate_metadata_template(transcript, config)
+    else:
+        metadata = generate_metadata_template(transcript, config)
+
+    # Add YouTube-specific fields
+    yt_cfg = config["youtube"]
+    metadata["privacy_status"] = yt_cfg["default_privacy"]
+    metadata["made_for_kids"] = yt_cfg["made_for_kids"]
+    metadata["language"] = yt_cfg["default_language"]
+    metadata["notify_subscribers"] = yt_cfg["notify_subscribers"]
+    metadata["generated_at"] = datetime.now().isoformat()
+    metadata["provider"] = provider
+
+    # Save metadata
+    meta_dir = Path(config["paths"]["metadata"])
+    meta_dir.mkdir(parents=True, exist_ok=True)
+    output_file = meta_dir / "metadata.json"
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2, ensure_ascii=False)
+
+    log.info(f"Metadata saved: {output_file}")
+    log.info(f"  Title: {metadata['title']}")
+    log.info(f"  Tags: {len(metadata['tags'])} keywords")
+    log.info(f"  Privacy: {metadata['privacy_status']}")
+
+if __name__ == "__main__":
+    main()
+9.2 Example Generated Metadata
+{
+  "title": "We Found DIAMONDS Deep Underground! | Minecraft Survival Ep 14",
+  "description": "We struck it rich deep beneath a frozen biome!\nJoin us as we navigate treacherous caves, dodge creepers,\nand finally unearth a vein of diamonds.\n\n========================================\nTIMESTAMPS\n========================================\n0:00 - Intro\n0:15 - Cave Exploration Begins\n3:42 - Creeper Ambush!\n5:18 - Diamond Discovery\n8:05 - Enchanting Gear\n10:30 - Surface Return & Base Building\n12:00 - Outro\n\n#Minecraft #MinecraftSurvival #DiamondMining",
+  "tags": [
+    "Minecraft", "Minecraft survival", "diamond mining",
+    "Minecraft caves", "Minecraft highlights", "let's play",
+    "Minecraft 2026", "creeper", "Minecraft Bedrock",
+    "family friendly gaming", "Minecraft tips",
+    "underground exploration", "Minecraft enchanting",
+    "gaming highlights", "Minecraft Java Edition"
+  ],
+  "category_id": "20",
+  "privacy_status": "unlisted",
+  "made_for_kids": false,
+  "language": "en",
+  "notify_subscribers": false,
+  "generated_at": "2026-03-28T15:39:00",
+  "provider": "openai"
+}
+10. Stage 8 ΓÇö YouTube Upload Preparation
+10.1 Google Cloud Console Setup
+Before the upload script can run, you need OAuth 2.0 credentials from Google Cloud Console. Follow these steps once:
+Go to console.cloud.google.com and create a new project (e.g., minecraft-pipeline).
+Navigate to APIs & Services ΓåÆ Library. Search for ΓÇ£YouTube Data API v3ΓÇ¥ and click Enable.
+Go to APIs & Services ΓåÆ Credentials. Click Create Credentials ΓåÆ OAuth client ID.
+Select Desktop app as the application type. Name it ΓÇ£Minecraft Pipeline.ΓÇ¥
+Click Download JSON and save the file as config/client_secrets.json.
+Under OAuth consent screen, add your Google account as a test user (required while the app is in ΓÇ£TestingΓÇ¥ mode).
+10.2 Script: 08_upload.py
+"""
+08_upload.py ΓÇö YouTube Upload with Resumable Upload Support
+===========================================================
+Authenticates via OAuth 2.0, uploads the final video with
+metadata from Stage 7, sets the custom thumbnail from Stage 6,
+and handles retries with exponential backoff.
+
+Usage:
+    python 08_upload.py
+    python 08_upload.py --privacy unlisted
+"""
+
+import json
+import time
+import yaml
+import logging
+import argparse
+import httplib2
+from pathlib import Path
+
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from googleapiclient.errors import HttpError
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("../logs/upload.log"),
+        logging.StreamHandler()
+    ]
+)
+log = logging.getLogger(__name__)
+
+SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+MAX_RETRIES = 5
+
+def load_config(path: str = "../config/pipeline_config.yaml") -> dict:
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+def authenticate(client_secrets_path: str) -> object:
+    """
+    Authenticate with YouTube via OAuth 2.0.
+    Stores token for reuse to avoid re-authentication.
+    """
+    token_path = Path(client_secrets_path).parent / "youtube_token.json"
+    creds = None
+
+    if token_path.exists():
+        creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                client_secrets_path, SCOPES
+            )
+            creds = flow.run_local_server(port=8080)
+
+        token_path.write_text(creds.to_json())
+        log.info("Authentication successful ΓÇö token saved")
+
+    return build("youtube", "v3", credentials=creds)
+
+def upload_video(youtube, video_path: str, metadata: dict) -> str:
+    """
+    Upload video to YouTube with resumable upload.
+    Returns the video ID on success.
+    """
+    body = {
+        "snippet": {
+            "title": metadata["title"],
+            "description": metadata["description"],
+            "tags": metadata.get("tags", []),
+            "categoryId": metadata.get("category_id", "20"),
+            "defaultLanguage": metadata.get("language", "en"),
+            "defaultAudioLanguage": metadata.get("language", "en")
+        },
+        "status": {
+            "privacyStatus": metadata.get("privacy_status", "unlisted"),
+            "madeForKids": metadata.get("made_for_kids", False),
+            "selfDeclaredMadeForKids": metadata.get("made_for_kids", False),
+            "notifySubscribers": metadata.get("notify_subscribers", False)
+        }
+    }
+
+    media = MediaFileUpload(
+        video_path,
+        mimetype="video/mp4",
+        resumable=True,
+        chunksize=10 * 1024 * 1024  # 10 MB chunks
+    )
+
+    request = youtube.videos().insert(
+        part="snippet,status",
+        body=body,
+        media_body=media
+    )
+
+    log.info(f"Uploading: {video_path}")
+    log.info(f"  Title: {metadata['title']}")
+    log.info(f"  Privacy: {metadata.get('privacy_status', 'unlisted')}")
+
+    response = None
+    retry_count = 0
+
+    while response is None:
+        try:
+            status, response = request.next_chunk()
+            if status:
+                progress = int(status.progress() * 100)
+                log.info(f"  Upload progress: {progress}%")
+        except HttpError as e:
+            if e.resp.status in [500, 502, 503, 504]:
+                retry_count += 1
+                if retry_count > MAX_RETRIES:
+                    log.error("Max retries exceeded!")
+                    raise
+                wait = 2 ** retry_count
+                log.warning(
+                    f"Server error {e.resp.status}, "
+                    f"retrying in {wait}s... ({retry_count}/{MAX_RETRIES})"
+                )
+                time.sleep(wait)
+            else:
+                raise
+
+    video_id = response["id"]
+    video_url = f"https://www.youtube.com/watch?v={video_id}"
+    log.info(f"Upload SUCCESS!")
+    log.info(f"  Video ID: {video_id}")
+    log.info(f"  URL: {video_url}")
+
+    return video_id
+
+def set_thumbnail(youtube, video_id: str, thumbnail_path: str) -> bool:
+    """Upload custom thumbnail for the video."""
+    try:
+        media = MediaFileUpload(thumbnail_path, mimetype="image/jpeg")
+        youtube.thumbnails().set(
+            videoId=video_id,
+            media_body=media
+        ).execute()
+        log.info(f"Thumbnail set for video {video_id}")
+        return True
+    except HttpError as e:
+        log.error(f"Thumbnail upload failed: {e}")
+        return False
+
+def main():
+    parser = argparse.ArgumentParser(description="Upload to YouTube")
+    parser.add_argument("--config", default="../config/pipeline_config.yaml")
+    parser.add_argument("--privacy", default=None,
+                        choices=["private", "unlisted", "public"])
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Validate everything without uploading")
+    args = parser.parse_args()
+
+    config = load_config(args.config)
+    yt_cfg = config["youtube"]
+
+    # Load metadata
+    meta_dir = Path(config["paths"]["metadata"])
+    meta_file = meta_dir / "metadata.json"
+    if not meta_file.exists():
+        log.error("metadata.json not found! Run metadata stage first.")
+        return
+
+    with open(meta_file) as f:
+        metadata = json.load(f)
+
+    # Override privacy if specified
+    if args.privacy:
+        metadata["privacy_status"] = args.privacy
+
+    # Find the final video
+    captioned_dir = Path(config["paths"]["captioned"])
+    video_files = sorted(captioned_dir.glob("captioned_final*.mp4"))
+    if not video_files:
+        log.error("No captioned video found!")
+        return
+    video_path = str(video_files[-1])
+
+    # Find thumbnail
+    thumb_dir = Path(config["paths"]["thumbnails"])
+    thumb_files = sorted(thumb_dir.glob("thumbnail_*.jpg"))
+    thumb_path = str(thumb_files[-1]) if thumb_files else None
+
+    if args.dry_run:
+        log.info("=== DRY RUN ΓÇö No upload will occur ===")
+        log.info(f"Video: {video_path}")
+        log.info(f"Title: {metadata['title']}")
+        log.info(f"Privacy: {metadata['privacy_status']}")
+        log.info(f"Thumbnail: {thumb_path or 'None'}")
+        log.info(f"Tags: {metadata.get('tags', [])}")
+        return
+
+    # Authenticate and upload
+    youtube = authenticate(yt_cfg["client_secrets"])
+    video_id = upload_video(youtube, video_path, metadata)
+
+    # Set thumbnail
+    if thumb_path:
+        set_thumbnail(youtube, video_id, thumb_path)
+
+    # Save result
+    result = {
+        "video_id": video_id,
+        "url": f"https://www.youtube.com/watch?v={video_id}",
+        "title": metadata["title"],
+        "privacy": metadata["privacy_status"],
+        "uploaded_at": time.strftime("%Y-%m-%dT%H:%M:%S")
+    }
+    result_file = meta_dir / "upload_result.json"
+    with open(result_file, "w") as f:
+        json.dump(result, f, indent=2)
+
+    log.info(f"Upload result saved: {result_file}")
+
+if __name__ == "__main__":
+    main()
+11. Pipeline Orchestrator
+The orchestrator is the single entry point that chains all eight stages. It supports running the full pipeline, individual stages, or stage ranges, with error handling, timing, logging, and optional notifications.
+11.1 Script: run_pipeline.py
+"""
+run_pipeline.py ΓÇö Pipeline Orchestrator
+========================================
+Chains all 8 stages with error handling, logging, timing,
+and CLI control. The single entry point for the entire
+Minecraft-to-YouTube automation workflow.
+
+Usage:
+    python run_pipeline.py --full
+    python run_pipeline.py --stage 3
+    python run_pipeline.py --stage 4-8
+    python run_pipeline.py --full --dry-run
+    python run_pipeline.py --full --child-safe
+"""
+
+import sys
+import time
+import yaml
+import logging
+import argparse
+import importlib
+import traceback
+from pathlib import Path
+from datetime import datetime
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("../logs/pipeline.log"),
+        logging.StreamHandler()
+    ]
+)
+log = logging.getLogger("pipeline")
+
+STAGES = {
+    1: {"module": "01_auto_record",       "name": "Auto-Record",
+        "skip_in_batch": True},
+    2: {"module": "02_collect_sync",       "name": "Collect & Sync"},
+    3: {"module": "03_highlight_detect",   "name": "Highlight Detection"},
+    4: {"module": "04_assemble_brand",     "name": "Assembly & Branding"},
+    5: {"module": "05_caption",            "name": "Captioning"},
+    6: {"module": "06_thumbnail",          "name": "Thumbnail Generation"},
+    7: {"module": "07_metadata",           "name": "Metadata Drafting"},
+    8: {"module": "08_upload",             "name": "YouTube Upload"},
+}
+
+def load_config(path: str = "../config/pipeline_config.yaml") -> dict:
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+def run_stage(stage_num: int, dry_run: bool = False) -> bool:
+    """Execute a single pipeline stage. Returns True on success."""
+    stage = STAGES.get(stage_num)
+    if not stage:
+        log.error(f"Invalid stage number: {stage_num}")
+        return False
+
+    name = stage["name"]
+    module_name = stage["module"]
+
+    log.info(f"{'='*60}")
+    log.info(f"STAGE {stage_num}: {name}")
+    log.info(f"{'='*60}")
+
+    if dry_run:
+        log.info(f"  [DRY RUN] Would execute {module_name}.py")
+        return True
+
+    start_time = time.time()
+
+    try:
+        # Import and run the stage module
+        sys.path.insert(0, str(Path(__file__).parent))
+        module = importlib.import_module(module_name.replace("-", "_"))
+        module.main()
+
+        elapsed = time.time() - start_time
+        log.info(f"Stage {stage_num} completed in {elapsed:.1f}s")
+        return True
+
+    except Exception as e:
+        elapsed = time.time() - start_time
+        log.error(f"Stage {stage_num} FAILED after {elapsed:.1f}s: {e}")
+        log.error(traceback.format_exc())
+        return False
+
+def parse_stage_range(stage_arg: str) -> list[int]:
+    """Parse stage argument: '3' ΓåÆ [3], '4-8' ΓåÆ [4,5,6,7,8]."""
+    if "-" in stage_arg:
+        start, end = stage_arg.split("-")
+        return list(range(int(start), int(end) + 1))
+    return [int(stage_arg)]
+
+def send_notification(title: str, message: str, config: dict):
+    """Send completion notification (Windows toast or email)."""
+    notif_cfg = config.get("notifications", {})
+    if not notif_cfg.get("enabled", False):
+        return
+
+    method = notif_cfg.get("method", "toast")
+    if method == "toast":
+        try:
+            from win10toast import ToastNotifier
+            toast = ToastNotifier()
+            toast.show_toast(title, message, duration=10)
+        except ImportError:
+            log.warning("win10toast not installed ΓÇö skipping notification")
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Minecraft ΓåÆ YouTube Pipeline Orchestrator",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python run_pipeline.py --full              Run stages 2-8
+  python run_pipeline.py --stage 3           Run highlight detection only
+  python run_pipeline.py --stage 4-8         Run assembly through upload
+  python run_pipeline.py --full --dry-run    Preview without processing
+  python run_pipeline.py --full --child-safe Enable child safety filters
+        """
+    )
+    parser.add_argument("--full", action="store_true",
+                        help="Run full pipeline (stages 2-8)")
+    parser.add_argument("--stage", type=str,
+                        help="Run specific stage(s): '3' or '4-8'")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Preview pipeline without executing")
+    parser.add_argument("--child-safe", action="store_true",
+                        help="Enable all child safety filters")
+    parser.add_argument("--config", default="../config/pipeline_config.yaml",
+                        help="Path to configuration YAML")
+    args = parser.parse_args()
+
+    if not args.full and not args.stage:
+        parser.print_help()
+        return
+
+    config = load_config(args.config)
+
+    # Apply child-safe overrides
+    if args.child_safe:
+        config["child_safety"]["webcam_capture"] = False
+        config["child_safety"]["voice_recording"] = False
+        config["child_safety"]["require_parent_review"] = True
+        config["child_safety"]["content_filter"] = True
+        config["youtube"]["default_privacy"] = "unlisted"
+        config["youtube"]["made_for_kids"] = True
+        log.info("Child safety mode ENABLED ΓÇö all safeguards active")
+
+    # Determine which stages to run
+    if args.full:
+        # Skip Stage 1 (real-time recording) in batch mode
+        stages_to_run = [s for s in range(2, 9)]
+    else:
+        stages_to_run = parse_stage_range(args.stage)
+
+    log.info(f"Pipeline started at {datetime.now().isoformat()}")
+    log.info(f"Stages to run: {stages_to_run}")
+    log.info(f"Dry run: {args.dry_run}")
+
+    pipeline_start = time.time()
+    results = {}
+
+    for stage_num in stages_to_run:
+        success = run_stage(stage_num, dry_run=args.dry_run)
+        results[stage_num] = success
+
+        if not success and not args.dry_run:
+            log.error(f"Pipeline halted at stage {stage_num}")
+            break
+
+    # Summary
+    total_time = time.time() - pipeline_start
+    log.info(f"\n{'='*60}")
+    log.info(f"PIPELINE SUMMARY")
+    log.info(f"{'='*60}")
+    for stage_num, success in results.items():
+        status = "PASS" if success else "FAIL"
+        name = STAGES[stage_num]["name"]
+        log.info(f"  Stage {stage_num} ({name}): {status}")
+    log.info(f"Total time: {total_time:.1f}s ({total_time/60:.1f} min)")
+
+    # Notification
+    all_passed = all(results.values())
+    if all_passed:
+        send_notification(
+            "Pipeline Complete",
+            f"All {len(results)} stages completed in "
+            f"{total_time/60:.1f} min",
+            config
+        )
+    else:
+        send_notification(
+            "Pipeline Failed",
+            f"Pipeline stopped ΓÇö check logs for details",
+            config
+        )
+
+if __name__ == "__main__":
+    main()
+11.2 Command-Line Usage Reference
+12. Child Safety Considerations
+12.1 Pre-Publish Review Checklist
+Watch the uploaded video end-to-end on YouTube (unlisted link).
+Verify no personal information is visible or audible (names, locations, school references).
+Confirm no other children appear in the recording (screen share, in-game chat).
+Check in-game chat for inappropriate usernames or messages ΓÇö blur or crop if needed.
+Review AI-generated title and description for accuracy and appropriateness.
+Confirm COPPA ΓÇ£Made for KidsΓÇ¥ designation is set correctly in YouTube Studio.
+Verify captions are accurate and contain no personal details.
+Only then: change privacy from ΓÇ£unlistedΓÇ¥ to ΓÇ£public.ΓÇ¥
+13. Scheduling & Automation
+Once the pipeline is tested and working, you can automate it to run on a schedule or trigger automatically when new recordings appear.
+13.1 Windows Task Scheduler
+Create a scheduled task that runs the pipeline nightly to process any recordings from the day:
+# PowerShell wrapper: run_pipeline_scheduled.ps1
+# Place in minecraft-pipeline/scripts/
+
+$ErrorActionPreference = "Stop"
+$PipelineRoot = "C:\Users\emmitt\minecraft-pipeline"
+$LogFile = "$PipelineRoot\logs\scheduled_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+
+Set-Location "$PipelineRoot\scripts"
+
+Write-Output "Pipeline started: $(Get-Date)" | Tee-Object -FilePath $LogFile
+
+try {
+    python run_pipeline.py --full --child-safe 2>&1 | Tee-Object -FilePath $LogFile -Append
+    Write-Output "Pipeline completed successfully: $(Get-Date)" | Tee-Object -FilePath $LogFile -Append
+} catch {
+    Write-Output "Pipeline FAILED: $_" | Tee-Object -FilePath $LogFile -Append
+    exit 1
+}
+To create the scheduled task via command line:
+schtasks /create /tn "MinecraftPipeline" /tr ^
+  "powershell.exe -ExecutionPolicy Bypass -File C:\Users\emmitt\minecraft-pipeline\scripts\run_pipeline_scheduled.ps1" ^
+  /sc daily /st 22:00 /ru emmitt /rl highest
+13.2 Watchdog-Based Real-Time Trigger
+For real-time processing (start the pipeline as soon as a recording finishes), add a watchdog monitor:
+# watchdog_trigger.py ΓÇö Launch pipeline when new recordings arrive
+
+import time
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+import subprocess
+from pathlib import Path
+
+class RecordingHandler(FileSystemEventHandler):
+    """Trigger pipeline when a new .mkv file appears in raw/."""
+
+    def __init__(self, cooldown_sec: int = 30):
+        self.cooldown_sec = cooldown_sec
+        self.last_trigger = 0
+
+    def on_created(self, event):
+        if not event.is_directory and event.src_path.endswith(".mkv"):
+            now = time.time()
+            if now - self.last_trigger > self.cooldown_sec:
+                print(f"New recording detected: {event.src_path}")
+                print("Waiting 10s for file to finalize...")
+                time.sleep(10)
+                print("Launching pipeline...")
+                subprocess.Popen([
+                    "python", "run_pipeline.py", "--full", "--child-safe"
+                ])
+                self.last_trigger = now
+
+if __name__ == "__main__":
+    paths_to_watch = ["../raw/pc", "../raw/device"]
+    observer = Observer()
+    handler = RecordingHandler()
+
+    for path in paths_to_watch:
+        Path(path).mkdir(parents=True, exist_ok=True)
+        observer.schedule(handler, path, recursive=False)
+
+    observer.start()
+    print("Watching for new recordings... (Ctrl+C to stop)")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
+13.3 Scheduling Options Comparison
+14. Troubleshooting & FAQ
+15. Appendix: Quick Reference Card
+Tear-out reference for daily use. Pin this next to your workstation.
+Key File Paths
+Environment Variables
+Minecraft Recording & YouTube Pipeline ΓÇö Full Automation Playbook v1.0
+ Prepared for Emmitt  |  March 28, 2026  |  Melissa, TX
+ This document and all associated scripts are provided for personal, non-commercial use.
