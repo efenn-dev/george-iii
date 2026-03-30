@@ -1,0 +1,153 @@
+# ============================================================
+# pipeline_config.yaml — Master Configuration
+# Minecraft Recording & YouTube Pipeline
+# ============================================================
+
+# --- OBS Connection (Primary PC) ---
+obs_primary:
+  host: "127.0.0.1"
+  port: 4455
+  password: "RIRdxYhYkb2LZ7Gi"
+
+# --- OBS Connection (Child's Device — LAN) ---
+obs_child:
+  host: "192.168.1.105"          # Child's device LAN IP
+  port: 4455
+  password: "child_obs_password"
+  enabled: false                  # Set true when child device has OBS
+
+# --- Recording Paths ---
+paths:
+  raw_pc: "./raw/pc"
+  raw_device: "./raw/device"
+  synced: "./processed/synced"
+  highlights: "./processed/highlights"
+  branded: "./processed/branded"
+  captioned: "./processed/captioned"
+  final: "./processed/final"
+  thumbnails: "./thumbnails"
+  metadata: "./metadata"
+  logs: "./logs"
+
+# --- Branding Assets ---
+assets:
+  intro: "./assets/intro.mp4"
+  outro: "./assets/outro.mp4"
+  logo: "./assets/logo.png"
+  overlay: "./assets/overlay.png"
+  thumbnail_font: "./assets/fonts/Montserrat-Bold.ttf"
+
+# --- Process Detection ---
+game_detection:
+  process_names:
+    - "Minecraft.Windows.exe"     # Bedrock Edition (Windows 10/11)
+    - "javaw.exe"                 # Java Edition
+  poll_interval_sec: 5
+
+# --- Sync Settings ---
+sync:
+  method: "audio_fingerprint"     # Options: audio_fingerprint, ntp_timestamp
+  max_offset_sec: 10
+  sample_rate: 22050
+
+# --- Highlight Detection ---
+highlights:
+  scene_threshold: 18             # Lowered for more forgiving Minecraft gameplay highlight detection
+  min_scene_len_sec: 1
+  clip_padding_sec: 15            # Seconds before/after highlight
+  whisper_model: "base"           # Options: tiny, base, small, medium, large
+  excitement_keywords:
+    - "yes"
+    - "no"
+    - "oh my god"
+    - "wow"
+    - "died"
+    - "creeper"
+    - "diamond"
+    - "ender"
+    - "let's go"
+    - "clutch"
+    - "insane"
+    - "watch out"
+    - "run"
+    - "nether"
+    - "wither"
+  max_highlights: 12
+  target_duration_min: 12         # Target final video length in minutes
+
+# --- Assembly & Branding ---
+assembly:
+  output_resolution: "1920x1080"
+  fps: 60
+  codec: "libx264"
+  audio_codec: "aac"
+  crf: 18                        # Quality (lower = better, 18 is visually lossless)
+  logo_opacity: 0.5
+  logo_position: "bottom-right"
+  pip_enabled: true               # Picture-in-picture for dual feeds
+  pip_size: "320x180"
+  pip_position: "top-right"
+  crossfade_duration_sec: 0.5
+
+# --- Captioning ---
+captioning:
+  whisper_model: "medium"         # Use higher quality model for final captions
+  language: "en"
+  subtitle_style:
+    font: "Arial"
+    font_size: 22
+    primary_color: "&H00FFFFFF"   # White (ASS color format)
+    outline_color: "&H00000000"   # Black outline
+    outline_width: 2
+    margin_v: 40                  # Vertical margin from bottom
+
+# --- Thumbnail ---
+thumbnail:
+  width: 1280
+  height: 720
+  title_font_size: 72
+  title_color: "#FFFFFF"
+  title_shadow_color: "#000000"
+  gradient_opacity: 0.6
+  logo_size: 80
+  episode_badge: true
+
+# --- Metadata (AI) ---
+metadata_ai:
+  provider: "local_llm"           # Options: openai, local_llm, template
+  openai_model: "gpt-4o-mini"     # For openai provider
+  ollama_model: "kimi-k2.5:cloud" # For local_llm provider
+  ollama_url: "http://127.0.0.1:11434/api/generate"
+  max_title_length: 60
+  max_tags: 20
+  default_category_id: "20"      # 20 = Gaming
+  default_hashtags:
+    - "#Minecraft"
+    - "#MinecraftGameplay"
+    - "#Gaming"
+
+# --- YouTube Upload ---
+youtube:
+  client_secrets: "./config/client_secrets.json"
+  default_privacy: "unlisted"     # Always unlisted first for review
+  made_for_kids: false            # COPPA flag — set per video
+  notify_subscribers: false       # Don't notify until reviewed
+  default_language: "en"
+
+# --- Child Safety ---
+child_safety:
+  webcam_capture: false           # NEVER enable without explicit consent
+  voice_recording: false          # Disabled by default on child's device
+  require_parent_review: true     # All uploads need manual publish
+  content_filter: true            # Scan transcripts for personal info
+  personal_info_patterns:
+    - "\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b"    # Phone numbers
+    - "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z]{2,}\\b"  # Emails
+    - "\\b\\d{5}(-\\d{4})?\\b"                # ZIP codes
+    - "(?i)\\b(school|address|teacher)\\b"     # Location references
+
+# --- Notifications ---
+notifications:
+  enabled: false
+  method: "toast"                 # Options: toast, email
+  email_to: ""
